@@ -35,7 +35,6 @@ def reorient(wbct_img):
 
     return wbct_img
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Resample an image using SimpleITK")
     parser.add_argument("wbct_img_path", help="The WBCT image file path")

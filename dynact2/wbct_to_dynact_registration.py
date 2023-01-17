@@ -11,6 +11,7 @@ Description: Performs intensity based image registration to move WBCT images to
 """
 
 import os
+import sys
 import argparse
 import SimpleITK as sitk
 
@@ -141,20 +142,20 @@ def main(fixed_img_path, moving_img_path, init_tfm_path):
     print("Reading in {}".format(moving_img_path))
     moving_img = sitk.ReadImage(moving_img_path, sitk.sitkFloat64)
 
-    tfm = sitk.ReadTransform(init_tfm_path)
-    # sitk.WriteImage(sitk.Resample(moving_img, fixed_img,
-    # 								tfm,
-    # 								sitk.sitkLinear, 0.0,
-    # 								moving_img.GetPixelID()),
-    # 								'/Users/mkuczyns/Desktop/wbct_to_volume1.nii')
-    # print(tfm)
-    # sys.exit()
+    # For some reason, reading in ITK-style transfroms from ITK-SNAP in SimpleITK
+    # creates a composite transform. But this composite transform only has one
+    # transform in it... So we can just extract it.
+    t = sitk.ReadTransform(init_tfm_path)
+    tx = sitk.CompositeTransform(t)
+    tfm = tx.GetNthTransform(0)
 
     # Perform landmark transformation
     ref_transform = tfm  # initialize_registration(init_tfm_path)
 
     # Setup registration method
     final_transform = image_registration(fixed_img, moving_img, ref_transform)
+    t = sitk.CompositeTransform(final_transform)
+    final_transform = t.GetNthTransform(0)
 
     # print("Writing to {}".format(moving_img_tmat_path))
     # sitk.WriteTransform(final_transform, moving_img_tmat_path)
@@ -172,7 +173,7 @@ def main(fixed_img_path, moving_img_path, init_tfm_path):
         moving_img.GetPixelID(),
     )
 
-    return moving_resampled
+    return moving_resampled, final_transform
 
 
 if __name__ == "__main__":
@@ -190,6 +191,12 @@ if __name__ == "__main__":
         help="The initial transformation file (path + filename)",
     )
     parser.add_argument(
+        "study_id",
+        nargs="?",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
         "output_path",
         nargs="?",
         type=str,
@@ -201,12 +208,18 @@ if __name__ == "__main__":
     fixed_img_path = args.fixed_img_path
     moving_img_path = args.moving_img_path
     init_tfm_path = args.init_tfm_path
+    study_id = args.study_id
     output_path = args.output_path
 
-    moving_img_registered_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.nii")
-    moving_img_tmat_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.tfm")
+    if study_id is None:
+        moving_img_registered_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.nii")
+        moving_img_tmat_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.tfm")
+    else:
+        moving_img_registered_path = os.path.join(output_path, study_id + "_WBCT_TO_DYNACT_REG.nii")
+        moving_img_tmat_path = os.path.join(output_path, study_id + "_WBCT_TO_DYNACT_REG.tfm")
 
-    moving_resampled = main(fixed_img_path, moving_img_path, init_tfm_path)
+    moving_resampled, final_transform = main(fixed_img_path, moving_img_path, init_tfm_path)
 
     print("Writing to {}".format(moving_img_registered_path))
     sitk.WriteImage(moving_resampled, moving_img_registered_path)
+    sitk.WriteTransform(final_transform, moving_img_tmat_path)

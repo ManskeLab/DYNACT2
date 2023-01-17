@@ -10,6 +10,7 @@ Description: Transform an image using the provided TFM file.
 import os
 import sys
 import argparse
+import numpy as np
 import SimpleITK as sitk
 
 
@@ -177,12 +178,12 @@ if __name__ == "__main__":
     print()
     print("READING: ")
     print(f"{fixedImage}")
-    fixed = sitk.ReadImage(fixedImage, sitk.sitkFloat32)
+    fixed = sitk.ReadImage(fixedImage)
 
     # Read in moving image
     print("READING: ")
     print(f"{movingImage}")
-    moving = sitk.ReadImage(movingImage, sitk.sitkFloat32)
+    moving = sitk.ReadImage(movingImage)
 
     # Read in the transform
     print("READING: ")
