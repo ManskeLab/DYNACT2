@@ -8,9 +8,10 @@ Description: Register dynamic CT image frames using sequential registration.
 """
 
 import os
+import sys
+import glob
 import errno
 import argparse
-import numpy as np
 import SimpleITK as sitk
 
 
@@ -216,7 +217,7 @@ def registration(init_tmat, fixed, moving):
     # Similarity metric settings:
     reg.SetMetricAsMeanSquares()
     reg.SetMetricSamplingStrategy(reg.RANDOM)
-    reg.SetMetricSamplingPercentage(0.01)
+    reg.SetMetricSamplingPercentage(0.001)
 
     # Set Interpolator
     reg.SetInterpolator(sitk.sitkLinear)
@@ -269,14 +270,6 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir):
     -------
 
     """
-    dynact_img_list = get_dynact_images(dynact_dir)
-
-    # Read masks
-    print("Reading in {}".format(mc1_seg))
-    mc1_seg_img = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
-    print("Reading in {}".format(trp_seg))
-    trp_seg_img = sitk.ReadImage(trp_seg, sitk.sitkUInt8)
-
     # Create the output directories
     output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
     output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
@@ -298,29 +291,40 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir):
         if e.errno != errno.EEXIST:  # Directory already exists error
             raise
 
+    # Count the number of files we need to register
+    filelist = glob.glob(os.path.join(dynact_dir, '*Volume_*_Resampled.nii'))
+
+    # We need to process the first frame before looping through all volumes/frames
+    # Read masks at frame 1
+    frame_1_dynact_path = os.path.join(dynact_dir, 'Volume_1_Resampled.nii')
+    print("Reading in {}".format(frame_1_dynact_path))
+    frame_1_dynact = sitk.ReadImage(frame_1_dynact_path, sitk.sitkFloat32)
+
+    print("Reading in {}".format(mc1_seg))
+    mc1_seg_img = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
+    print("Reading in {}".format(trp_seg))
+    trp_seg_img = sitk.ReadImage(trp_seg, sitk.sitkUInt8)
+
     # Resample the next MC1/TRP mask to match the DYNACT grayscale image
-    mc1_seg_img_resampled = binary_resample(dynact_img_list[0][2], mc1_seg_img)
-    trp_seg_img_resampled = binary_resample(dynact_img_list[0][2], trp_seg_img)
+    mc1_seg_img_resampled = binary_resample(frame_1_dynact, mc1_seg_img)
+    trp_seg_img_resampled = binary_resample(frame_1_dynact, trp_seg_img)
 
     # Crop the MC1 and TRP from the first frame
     # Dilate the MC1 and TRP segmentation masks
-    dynact_img_list[0][1][0] = dilate_mask(mc1_seg_img_resampled)
-    dynact_img_list[0][1][1] = dilate_mask(trp_seg_img_resampled)
+    frame_1_dynact_mc1_seg = dilate_mask(mc1_seg_img_resampled)
+    frame_1_dynact_trp_seg = dilate_mask(trp_seg_img_resampled)
 
     # Mask out each bone from the first frame
-    masked_mc1_img = mask_bone(dynact_img_list[0][2], dynact_img_list[0][1][0])
-    masked_trp_img = mask_bone(dynact_img_list[0][2], dynact_img_list[0][1][1])
+    masked_mc1_img = mask_bone(frame_1_dynact, frame_1_dynact_mc1_seg)
+    masked_trp_img = mask_bone(frame_1_dynact, frame_1_dynact_trp_seg)
 
-    dynact_img_list[0][1][0] = mc1_seg_img_resampled
-    dynact_img_list[0][1][1] = trp_seg_img_resampled
-
-    dynact_full_mask_list = [None] * 60
+    dynact_full_mask_list = [None] * len(filelist)
     dynact_full_mask_list[0] = [mc1_seg_img, trp_seg_img]
 
     # Loop through all DYNACT frames and register the first volume to all other volumes
     # Registration is performed on the MC1 and TRP individually (to get frame 1 to all other frames TMAT)
     # Then, using ITK, find the transformation between each frame and the next frame using the centroid of each mask (to get between frame TMATs)
-    ref_frame = dynact_img_list[0][2]
+    ref_frame = frame_1_dynact
     ref_frame_mc1_mask = mc1_seg_img_resampled  # Only used for cropping
     ref_frame_trp_mask = trp_seg_img_resampled  # Only used for cropping
     ref_frame_mc1_masked = masked_mc1_img  # Masked reference MC1
@@ -331,47 +335,60 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir):
     prev_frame_mc1_mask = mc1_seg_img_resampled
     prev_frame_trp_mask = trp_seg_img_resampled
 
-    for i in range(0, len(dynact_img_list) - 2):
-        print("Registering volume {} to volume {}".format(i + 1, i + 2))
+    for i in range(1, len(filelist)-1, 1):
+        print("Registering volume {} to volume {}".format(i, i + 1))
+
+        # Get the next volume file
+        current_file_path = os.path.join(dynact_dir, "Volume_" + str(i) + "_Resampled.nii")
+        next_file_path = os.path.join(dynact_dir, "Volume_" + str(i+1) + "_Resampled.nii")
+
+        print("Reading in {}".format(current_file_path))
+        print("Reading in {}".format(next_file_path))
+
+        if not os.path.isfile(next_file_path):
+            continue
 
         # Get the next frame
-        previous_frame = dynact_img_list[i][2]
-        current_frame = dynact_img_list[i + 1][2]
+        previous_frame = sitk.ReadImage(current_file_path, sitk.sitkFloat32)
+        current_frame = sitk.ReadImage(next_file_path, sitk.sitkFloat32)
 
         # Set the output file names
         # Keep number to match the input volume numbering (i.e., 1...60, not 0...59)
         mc1_inital_transf_path = os.path.join(
             output_initial_transf_dir,
-            "VOLUME_REF_TO_" + str(i + 2) + "_MC1_INITAL_TRANSF.nii",
+            "VOLUME_REF_TO_" + str(i + 1) + "_MC1_INITAL_TRANSF.nii",
         )
         trp_inital_transf_path = os.path.join(
             output_initial_transf_dir,
-            "VOLUME_REF_TO_" + str(i + 2) + "_TRP_INITAL_TRANSF.nii",
+            "VOLUME_REF_TO_" + str(i + 1) + "_TRP_INITAL_TRANSF.nii",
         )
         mc1_final_tfm_output_path = os.path.join(
-            output_tmat_dir, "VOLUME_REF_TO_" + str(i + 2) + "_MC1_REG.tfm"
+            output_tmat_dir, "VOLUME_REF_TO_" + str(i + 1) + "_MC1_REG.tfm"
         )
         trp_final_tfm_output_path = os.path.join(
-            output_tmat_dir, "VOLUME_REF_TO_" + str(i + 2) + "_TRP_REG.tfm"
+            output_tmat_dir, "VOLUME_REF_TO_" + str(i + 1) + "_TRP_REG.tfm"
         )
         mc1_final_image_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_MC1_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_MC1_REG.nii"
         )
         trp_final_image_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_TRP_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_TRP_REG.nii"
         )
         mc1_final_mask_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_MC1_MASK_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_MC1_MASK_REG.nii"
         )
         trp_final_mask_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_TRP_MASK_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_TRP_MASK_REG.nii"
         )
         mc1_final_full_mask_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_MC1_FULLMASK_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_MC1_FULLMASK_REG.nii"
         )
         trp_final_full_mask_output_path = os.path.join(
-            output_seg_dir, "VOLUME_REF_TO_" + str(i + 2) + "_TRP_FULLMASK_REG.nii"
+            output_seg_dir, "VOLUME_REF_TO_" + str(i + 1) + "_TRP_FULLMASK_REG.nii"
         )
+
+        if os.path.isfile(mc1_final_image_output_path) or os.path.isfile(trp_final_image_output_path):
+            continue
 
         # Initialize the registration by using the previous frame
         inital_transform_prev_to_current = initialize_tfm(current_frame, previous_frame)

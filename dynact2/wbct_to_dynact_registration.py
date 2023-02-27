@@ -86,7 +86,8 @@ def image_registration(fixed_img, moving_img, ref_transform):
     # Similarity metric settings:
     reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     reg.SetMetricSamplingStrategy(reg.RANDOM)
-    reg.SetMetricSamplingPercentage(0.01)
+    # reg.SetMetricSamplingPercentage(0.01)
+    reg.SetMetricSamplingPercentagePerLevel([0.01, 0.001], 0)
 
     # Set Interpolator
     reg.SetInterpolator(sitk.sitkLinear)
