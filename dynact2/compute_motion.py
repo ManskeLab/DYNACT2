@@ -6,6 +6,7 @@ Created on:   Jan. 11, 2021
 """
 
 import os
+import re
 import sys
 import argparse
 import numpy as np
@@ -20,120 +21,6 @@ from mod_biomech.calc_coord_systems import (
 
 # Global variable for debugging
 debug = False
-
-
-def main(rater, next_scan):
-    """
-    Main function to compute joint angles and translations. Directory structure is
-    assumed to follow a specific format to automate setup of files/folders used
-    in the computation of joint motion.
-
-    Parameters
-    ----------
-    rater : string
-        String containing the name of the next rater to process
-
-    next_scan : string
-        String containing the next directory to process
-
-    Returns
-    -------
-    arr : list
-        A list containing the rotations and translations computed for the specified
-        rater and scan
-    """
-    # -------------------------------------------------------#
-    #   Step 1: Setup inputs                                #
-    # -------------------------------------------------------#
-    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    point_dir = os.path.join(parent_dir, "points")
-    point_dir = os.path.join(point_dir, "points_July2021")
-    reg_dir = os.path.join(parent_dir, "reg")
-    model_dir = os.path.join(parent_dir, "models")
-
-    # HR-pQCT directories:
-    xct_pnts_dir = os.path.join(point_dir, os.path.join(next_scan, "HR-pQCT"))
-    ct2xct_reg_dir = os.path.join(
-        reg_dir, os.path.join(next_scan, "staticCT_to_HR-pQCT")
-    )
-    xct_model_dir = os.path.join(model_dir, os.path.join(next_scan, "HR-pQCT"))
-
-    # Static and Dynamic CT directories:
-    ct_pnts_dir = os.path.join(point_dir, os.path.join(next_scan, "staticCT"))
-    ct2dynact_reg_dir = os.path.join(
-        reg_dir, os.path.join(next_scan, "staticCT_to_dynamicCT/B")
-    )
-
-    dynact_pnts_dir = os.path.join(point_dir, os.path.join(next_scan, "dynamicCT"))
-    dynact_reg_dir = os.path.join(
-        reg_dir, os.path.join(next_scan, "dynamicCT_frames/B/FinalTFMs")
-    )
-
-    if "3" in next_scan or "5" in next_scan or "7" in next_scan or "9" in next_scan:
-        ct2dynact_reg_dir = os.path.join(
-            reg_dir, os.path.join(next_scan, "staticCT_to_dynamicCT/C")
-        )
-        dynact_reg_dir = os.path.join(
-            reg_dir, os.path.join(next_scan, "dynamicCT_frames/C/FinalTFMs")
-        )
-
-    ct_model_dir = os.path.join(model_dir, os.path.join(next_scan, "staticCT"))
-    dynact_model_dir = os.path.join(model_dir, os.path.join(next_scan, "dynamicCT"))
-
-    # -------------------------------------------------------#
-    #   Step 2: Read in the points from text file           #
-    # -------------------------------------------------------#
-    # There should be 3 points for the MC1 and 4 for the TRP
-    # Points are picked in the XCT space
-    mc1_pnts_file = os.path.join(
-        point_dir, str(next_scan) + "e_MC1_SCS_" + str(rater) + ".txt"
-    )
-    trp_pnts_file = os.path.join(
-        point_dir, str(next_scan) + "e_TRP_SCS_" + str(rater) + ".txt"
-    )
-
-    mc1_pnts_list = [None] * 3
-    trp_pnts_list = [None] * 4
-
-    print(
-        Colours.BLUE
-        + "\t Reading in MC1 points: "
-        + Colours.WHITE
-        + "{}".format(mc1_pnts_file)
-    )
-    try:
-        with open(mc1_pnts_file) as f:
-            mc1_pnts_list = [line.rstrip("\n") for line in f]
-    except FileNotFoundError:
-        print(Colours.RED + "ERROR: File does not exist!" + Colours.WHITE)
-        sys.exit(1)
-
-    print(
-        Colours.BLUE
-        + "\t Reading in TRP points: "
-        + Colours.WHITE
-        + "{}".format(trp_pnts_file)
-    )
-    try:
-        with open(trp_pnts_file) as f:
-            trp_pnts_list = [line.rstrip("\n") for line in f]
-    except FileNotFoundError:
-        print(Colours.RED + "ERROR: File does not exist!" + Colours.WHITE)
-        sys.exit(1)
-
-    # Put the directories into lists to cleanly pass to the compute_angles function
-    xct_dir_list = [xct_pnts_dir, ct2xct_reg_dir, xct_model_dir]
-    ct_dir_list = [ct_pnts_dir, ct2dynact_reg_dir, ct_model_dir]
-    dynact_dir_list = [dynact_pnts_dir, dynact_reg_dir, dynact_model_dir]
-
-    # -------------------------------------------------------#
-    #   Step 3: Transform XCT points to DYNACT space        #
-    # -------------------------------------------------------#
-    arr = xct_to_dynact_transform(
-        xct_dir_list, ct_dir_list, dynact_dir_list, mc1_pnts_list, trp_pnts_list
-    )
-
-    return arr
 
 
 def compute_angles(R_relative):
@@ -203,9 +90,7 @@ def compute_translations(R_relative, curr_origin, prev_origin):
     return translations, transformed_origin
 
 
-def dynact_frame_transform(
-    dynact_reg_dir, mc1_pnts_dynact, trp_pnts_dynact, R_relative
-):
+def dynact_frame_transform(dynact_tfms_dir, mc1_pnts_dynact, trp_pnts_dynact, R_relative):
     """
     Transform MC1 and TRP points from XCT to CT, CT to DYNACT frame #1, and
     between DYNACT frames. Joint angles and translations are then computed for
@@ -213,7 +98,7 @@ def dynact_frame_transform(
 
     Parameters
     ----------
-    dynact_reg_dir : list
+    dynact_tfms_dir : list
 
     mc1_pnts_dynact : list
         Anatommical landmarks for the MC1.
@@ -299,7 +184,7 @@ def dynact_frame_transform(
         # Transform to the next DYNACT frame
         # MC1
         dynact_reg_path_mc1 = os.path.join(
-            dynact_reg_dir, "VOLUME_REF_TO_" + str(i) + "_MC1_REG.tfm"
+            dynact_tfms_dir, "VOLUME_REF_TO_" + str(i) + "_MC1_REG.tfm"
         )
         dynact_next_reg_mc1_tfm = sitk.ReadTransform(dynact_reg_path_mc1)
 
@@ -315,7 +200,7 @@ def dynact_frame_transform(
 
         # TRP
         dynact_reg_path_trp = os.path.join(
-            dynact_reg_dir, "VOLUME_REF_TO_" + str(i) + "_TRP_REG.tfm"
+            dynact_tfms_dir, "VOLUME_REF_TO_" + str(i) + "_TRP_REG.tfm"
         )
         dynact_next_reg_trp_tfm = sitk.ReadTransform(dynact_reg_path_trp)
 
@@ -366,6 +251,23 @@ def dynact_frame_transform(
         ax_rot = np.rad2deg(angle_list[1])
         flex_ext = np.rad2deg(angle_list[2])
 
+        if debug:
+            print(Colours.PURPLE + "\t DEBUG: Points at frame " + str(i) + ":" + Colours.WHITE)
+            print("\t MC1:")
+            print("\t (" + str(mc1_pnt1_dynact_frame) + ")")
+            print("\t (" + str(mc1_pnt2_dynact_frame) + ")")
+            print("\t (" + str(mc1_pnt3_dynact_frame) + ")")
+            print("\t TRP:")
+            print("\t (" + str(trp_pnt1_dynact_frame) + ")")
+            print("\t (" + str(trp_pnt2_dynact_frame) + ")")
+            print("\t (" + str(trp_pnt3_dynact_frame) + ")")
+            print("\t (" + str(trp_pnt4_dynact_frame) + ")")
+            print("\t ANGLES:")
+            print("\t AD/AD: " + str(ab_ad))
+            print("\t FL/EX: " + str(flex_ext))
+            print("\t ROT: " + str(ax_rot))
+            print()
+
         # translation
         prev_origin = [o_x[i - 2], o_y[i - 2], o_z[i - 2]]
         t, o = compute_translations(R_relative, mc1_pnt3_dynact_frame, prev_origin)
@@ -397,41 +299,27 @@ def dynact_frame_transform(
     return rotations, translations
 
 
-def xct_to_dynact_transform(
-    xct_dir_list, ct_dir_list, dynact_dir_list, mc1_pnts_list, trp_pnts_list
-):
+def xct_to_dynact_transform(study_id, point_files, wbct_to_dynact_tfms, dynact_tfm_dir):
     """
     Transforms XCT points to the DYNACT space to compute joint motion.
 
     Parameters
     ----------
-    xct_dir_list : list
-
-    ct_dir_list : list
-
-    dynact_dir_list : list
-
-    mc1_pnts_list : list
-
-    trp_pnts_list : list
 
     Returns
     -------
     arr : list
     """
     # ----------------------------------------------------------#
-    #   Step 1: Setup directories, points, and XCT images      #
+    #   Step 1: Setup                                           #
     # ----------------------------------------------------------#
-    # Unpack the directory lists
-    xct_pnts_dir = xct_dir_list[0]
-    ct2xct_reg_dir = xct_dir_list[1]
-    xct_model_dir = xct_dir_list[2]
-    ct_pnts_dir = ct_dir_list[0]
-    ct2dynact_reg_dir = ct_dir_list[1]
-    ct_model_dir = ct_dir_list[2]
-    dynact_pnts_dir = dynact_dir_list[0]
-    dynact_reg_dir = dynact_dir_list[1]
-    dynact_model_dir = dynact_dir_list[2]
+    # SCS point files
+    mc1_pnts_list = point_files[0]
+    trp_pnts_list = point_files[1]
+
+    # WBCT to DYNACT transforms
+    wbct_to_dynact_mc1_tfm = wbct_to_dynact_tfms[0]
+    wbct_to_dynact_trp_tfm = wbct_to_dynact_tfms[1]
 
     # Strip the list to create a seperate list for each point
     mc1_pnt1 = [float(s) for s in mc1_pnts_list[0].split(",")]
@@ -444,17 +332,6 @@ def xct_to_dynact_transform(
     trp_pnt4 = [float(s) for s in trp_pnts_list[3].split(",")]
 
     if debug:
-        print(Colours.PURPLE + "\t DEBUG: Directories being used:" + Colours.WHITE)
-        print("\t xct_pnts_dir: " + str(xct_pnts_dir))
-        print("\t ct2xct_reg_dir: " + str(ct2xct_reg_dir))
-        print("\t xct_model_dir: " + str(xct_model_dir))
-        print("\t ct_pnts_dir: " + str(ct_pnts_dir))
-        print("\t ct2dynact_reg_dir: " + str(ct2dynact_reg_dir))
-        print("\t ct_model_dir: " + str(ct_model_dir))
-        print("\t dynact_pnts_dir: " + str(dynact_pnts_dir))
-        print("\t dynact_reg_dir: " + str(dynact_reg_dir))
-        print("\t dynact_model_dir: " + str(dynact_model_dir))
-        print()
         print(Colours.PURPLE + "\t DEBUG: Points read in:" + Colours.WHITE)
         print("\t MC1:")
         print("\t (" + str(mc1_pnt1) + ")")
@@ -467,10 +344,9 @@ def xct_to_dynact_transform(
         print("\t (" + str(trp_pnt4) + ")")
         print()
 
-    # ----------------------------------------------------------#
-    #   Step 2: Transform points from XCT to CT image space    #
-    # ----------------------------------------------------------#
-    # Read in the CT to XCT transform
+    # --------------------------------------------------------------#
+    #   Step 2: Transform points from WBCT to DYNACT image space    #
+    # --------------------------------------------------------------#
     # Nifti to ITK World coordinates (Flip X and Y axes to go from VTK to ITK coordinates)
     mc1_pnt1 = [-1 * mc1_pnt1[0], -1 * mc1_pnt1[1], mc1_pnt1[2]]
     mc1_pnt2 = [-1 * mc1_pnt2[0], -1 * mc1_pnt2[1], mc1_pnt2[2]]
@@ -482,65 +358,23 @@ def xct_to_dynact_transform(
     trp_pnt4 = [-1 * trp_pnt4[0], -1 * trp_pnt4[1], trp_pnt4[2]]
 
     # MC1
-    ct2xct_path_mc1 = os.path.join(ct2xct_reg_dir, "CT2XCT_MC1_REG.tfm")
-    ct2xct_mc1_tfm = sitk.ReadTransform(ct2xct_path_mc1)
-    xct2ct_mc1_tfm = ct2xct_mc1_tfm.GetInverse()
+    wbct2dynact_mc1_tfm = sitk.ReadTransform(wbct_to_dynact_mc1_tfm)
 
-    mc1_pnt1_ct = transform_point(xct2ct_mc1_tfm, mc1_pnt1)
-    mc1_pnt2_ct = transform_point(xct2ct_mc1_tfm, mc1_pnt2)
-    mc1_pnt3_ct = transform_point(xct2ct_mc1_tfm, mc1_pnt3)
+    mc1_pnt1_dynact = transform_point(wbct2dynact_mc1_tfm, mc1_pnt1)
+    mc1_pnt2_dynact = transform_point(wbct2dynact_mc1_tfm, mc1_pnt2)
+    mc1_pnt3_dynact = transform_point(wbct2dynact_mc1_tfm, mc1_pnt3)
 
     # TRP
-    ct2xct_path_trp = os.path.join(ct2xct_reg_dir, "CT2XCT_TRP_REG.tfm")
-    ct2xct_trp_tfm = sitk.ReadTransform(ct2xct_path_trp)
-    xct2ct_trp_tfm = ct2xct_trp_tfm.GetInverse()
+    wbct2dynact_trp_tfm = sitk.ReadTransform(wbct_to_dynact_trp_tfm)
 
-    trp_pnt1_ct = transform_point(xct2ct_trp_tfm, trp_pnt1)
-    trp_pnt2_ct = transform_point(xct2ct_trp_tfm, trp_pnt2)
-    trp_pnt3_ct = transform_point(xct2ct_trp_tfm, trp_pnt3)
-    trp_pnt4_ct = transform_point(xct2ct_trp_tfm, trp_pnt4)
+    trp_pnt1_dynact = transform_point(wbct2dynact_trp_tfm, trp_pnt1)
+    trp_pnt2_dynact = transform_point(wbct2dynact_trp_tfm, trp_pnt2)
+    trp_pnt3_dynact = transform_point(wbct2dynact_trp_tfm, trp_pnt3)
+    trp_pnt4_dynact = transform_point(wbct2dynact_trp_tfm, trp_pnt4)
 
     if debug:
         print(
             Colours.PURPLE + "\t DEBUG: Points transformed to CT space:" + Colours.WHITE
-        )
-        print("\t MC1:")
-        print("\t mc1_pnt1_ct: " + str(mc1_pnt1_ct))
-        print("\t mc1_pnt2_ct: " + str(mc1_pnt2_ct))
-        print("\t mc1_pnt3_ct: " + str(mc1_pnt3_ct))
-        print("\t TRP:")
-        print("\t trp_pnt1_ct: " + str(trp_pnt1_ct))
-        print("\t trp_pnt2_ct: " + str(trp_pnt2_ct))
-        print("\t trp_pnt3_ct: " + str(trp_pnt3_ct))
-        print("\t trp_pnt4_ct: " + str(trp_pnt4_ct))
-        print()
-
-    # ----------------------------------------------------------#
-    #   Step 3: Transform points from CT to DYNACT image space #
-    # ----------------------------------------------------------#
-    # Read in the CT to DYNACT (first frame) transform
-    # MC1
-    ct2dynact_path_mc1 = os.path.join(ct2dynact_reg_dir, "CT2DYNACT_MC1_REG.tfm")
-    ct2dynact_mc1_tfm = sitk.ReadTransform(ct2dynact_path_mc1)
-
-    mc1_pnt1_dynact = transform_point(ct2dynact_mc1_tfm, mc1_pnt1_ct)
-    mc1_pnt2_dynact = transform_point(ct2dynact_mc1_tfm, mc1_pnt2_ct)
-    mc1_pnt3_dynact = transform_point(ct2dynact_mc1_tfm, mc1_pnt3_ct)
-
-    # TRP
-    ct2dynact_path_trp = os.path.join(ct2dynact_reg_dir, "CT2DYNACT_TRP_REG.tfm")
-    ct2dynact_trp_tfm = sitk.ReadTransform(ct2dynact_path_trp)
-
-    trp_pnt1_dynact = transform_point(ct2dynact_trp_tfm, trp_pnt1_ct)
-    trp_pnt2_dynact = transform_point(ct2dynact_trp_tfm, trp_pnt2_ct)
-    trp_pnt3_dynact = transform_point(ct2dynact_trp_tfm, trp_pnt3_ct)
-    trp_pnt4_dynact = transform_point(ct2dynact_trp_tfm, trp_pnt4_ct)
-
-    if debug:
-        print(
-            Colours.PURPLE
-            + "\t DEBUG: Points transformed to DYNACT space:"
-            + Colours.WHITE
         )
         print("\t MC1:")
         print("\t mc1_pnt1_dynact: " + str(mc1_pnt1_dynact))
@@ -593,10 +427,10 @@ def xct_to_dynact_transform(
         trp_pnt1_dynact,
         trp_pnt2_dynact,
         trp_pnt3_dynact,
-        trp_pnt4_dynact,
+        trp_pnt4_dynact
     ]
     rotations, translations = dynact_frame_transform(
-        dynact_reg_dir, mc1_pnts_dynact, trp_pnts_dynact, R_relative
+        dynact_tfm_dir, mc1_pnts_dynact, trp_pnts_dynact, R_relative
     )
 
     ab_ad_arr = rotations[0]
@@ -610,24 +444,95 @@ def xct_to_dynact_transform(
     return arr
 
 
+def main(study_id, wbct_to_dynact_tfms, dynact_tfm_dir, point_files):
+    """
+    Main function to compute joint angles and translations.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    arr : list
+        A list containing the rotations and translations
+    """
+    # -------------------------------------------------------#
+    #   Step 1: Setup inputs                                #
+    # -------------------------------------------------------#
+
+    # -------------------------------------------------------#
+    #   Step 2: Read in the points from text file           #
+    # -------------------------------------------------------#
+    # There should be 3 points for the MC1 and 4 for the TRP
+    # Points are picked in the WBCT space
+    mc1_pnts_file = point_files[0]
+    trp_pnts_file = point_files[1]
+
+    mc1_pnts_list = [None] * 3
+    trp_pnts_list = [None] * 4
+
+    print(
+        Colours.BLUE
+        + "\t Reading in MC1 points: "
+        + Colours.WHITE
+        + "{}".format(mc1_pnts_file)
+    )
+    try:
+        with open(mc1_pnts_file) as f:
+            mc1_pnts_list = [line.rstrip("\n") for line in f]
+    except FileNotFoundError:
+        print(Colours.RED + "ERROR: File does not exist!" + Colours.WHITE)
+        sys.exit(1)
+
+    print(
+        Colours.BLUE
+        + "\t Reading in TRP points: "
+        + Colours.WHITE
+        + "{}".format(trp_pnts_file)
+    )
+    try:
+        with open(trp_pnts_file) as f:
+            trp_pnts_list = [line.rstrip("\n") for line in f]
+    except FileNotFoundError:
+        print(Colours.RED + "ERROR: File does not exist!" + Colours.WHITE)
+        sys.exit(1)
+
+    points_list = [mc1_pnts_list, trp_pnts_list]
+
+    # -------------------------------------------------------#
+    #   Step 3: Transform XCT points to DYNACT space        #
+    # -------------------------------------------------------#
+    arr = xct_to_dynact_transform(study_id, points_list, wbct_to_dynact_tfms, dynact_tfm_dir)
+
+    return arr
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("dynact_img_dir", type=str, help="Dynamic CT image directory")
+    parser.add_argument("wbct_to_dynact_mc1_tfm", type=str)
+    parser.add_argument("wbct_to_dynact_trp_tfm", type=str)
+    parser.add_argument("dynact_tfm_dir", type=str)
     parser.add_argument("mc1_point_file", type=str, help="MC1 SCS point text file")
     parser.add_argument("trp_point_file", type=str, help="TRP SCS point text file")
     parser.add_argument("output_path", type=str, help="The directory for any outputs")
     parser.add_argument("-d", "--debug", nargs="?", type=bool, default=False)
 
     args = parser.parse_args()
-    dynact_img_dir = args.dynact_img_dir
+    wbct_to_dynact_mc1_tfm = args.wbct_to_dynact_mc1_tfm
+    wbct_to_dynact_trp_tfm = args.wbct_to_dynact_trp_tfm
+    dynact_tfm_dir = args.dynact_tfm_dir
     mc1_point_file = args.mc1_point_file
     trp_point_file = args.trp_point_file
     output_path = args.output_path
     debug = args.debug
 
+    wbct_to_dynact_tfms = [wbct_to_dynact_mc1_tfm, wbct_to_dynact_trp_tfm]
+    point_files = [mc1_point_file, trp_point_file]
+
     # Extract study ID
-    # Dynamic CT image directory path format: /path/to/images/DYNACT2_001
-    study_id =  os.path.basename(dynact_img_dir)
+    # Make it OS independent
+    # Format of external SSD: /Manskelab/ManskelabProjects/DYNACT2/models/...
+    study_id =  outer_r = re.search('models' + str(os.sep) + '(.+?)' + str(os.sep), dynact_tfm_dir).group(1)
 
 
     # Create an array for the roatation/translantion results
@@ -635,24 +540,23 @@ if __name__ == "__main__":
     frame_arr = np.arange(59).astype(str)
     frame_arr.shape = (59, 1)
 
-    # Compute angles
-    # print(
-    #     Colours.BOLD
-    #     + "Computing angles for "
-    #     + str(sub_dir)
-    #     + "..."
-    #     + Colours.WHITE
-    # )
+    print(
+        Colours.BOLD
+        + "Computing angles for "
+        + str(study_id)
+        + "..."
+        + Colours.WHITE
+    )
 
-    # output_arr = frame_arr
-    # output_arr = np.hstack([output_arr, main(rater_list[0], sub_dir)])
-    # output_arr = np.vstack([header_arr, output_arr])
-    # output_arr = output_arr.astype(str)
+    output_arr = frame_arr
+    output_arr = np.hstack([output_arr, main(study_id, wbct_to_dynact_tfms, dynact_tfm_dir, point_files)])
+    output_arr = np.vstack([header_arr, output_arr])
+    output_arr = output_arr.astype(str)
 
-    # print(Colours.BOLD + "Writing out values to CSV..." + Colours.WHITE)
-    # print()
-    # output_csv = os.path.join(output_dir, str(sub_dir) + "_angles.csv")
-    # np.savetxt(output_csv, output_arr, delimiter=",", fmt="%s")
+    print(Colours.BOLD + "Writing out values to CSV..." + Colours.WHITE)
+    print()
+    output_csv = os.path.join(output_path, str(study_id) + "_angles.csv")
+    np.savetxt(output_csv, output_arr, delimiter=",", fmt="%s")
 
     print()
     print(Colours.BOLD + "Done!")
