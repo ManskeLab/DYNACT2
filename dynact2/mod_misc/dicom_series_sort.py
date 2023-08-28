@@ -106,11 +106,19 @@ if __name__ == "__main__":
             # If the file is already decompressed, skip it
             tsUID = dicom.file_meta.TransferSyntaxUID
 
+            # for element in dicom:
+            #     print(element)
+
             # Get the file's tag and parse out the series description
             # Series description is located at [0x0008, 0x103e]
-            # Use the instance number located at [0x0020, 0x0013] to rename the images
             series_description = str(dicom[0x0008, 0x103E].value).upper()
-            instance_number = dicom[0x0020, 0x0013].value
+
+            # Use the instance number located at [0x0020, 0x0013] to rename the images
+            # The instance number can be empty so use the SOP Instance UID tag to get the instance number
+            # The SOP Instance UID is located at [0x0008, 0x0018]
+            # The instance number is the last number in the SOP Instance UID (separated by .)
+            sop_instance_uid = dicom[0x0008, 0x0018].value
+            instance_number = str(sop_instance_uid).split('.')[-1]
 
             # Make the instance number have the same number of digits for all images
             instance_number_str = str(instance_number).rjust(4, "0")

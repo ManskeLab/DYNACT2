@@ -76,9 +76,9 @@ def sort_dynact_volumes(input_directory):
         # Get the next item in the directory
         next_item = os.fsdecode(dicom_file)
 
-        # Skip any directories and loop over files only
-        if os.path.isdir(next_item):
-            print("Skipping directory: " + next_item)
+        # Skip any directories and hidden files
+        if os.path.isdir(next_item) or next_item.startswith('.'):
+            # print("Skipping: " + next_item)
             continue
 
         filename, extension = os.path.splitext(next_item)
@@ -115,9 +115,9 @@ def sort_dynact_volumes(input_directory):
         # Get the next item in the directory
         next_item = os.fsdecode(dicom_file)
 
-        # Skip any directories and loop over files only
-        if os.path.isdir(next_item):
-            print("Skipping directory: " + next_item)
+        # Skip any directories and hidden files
+        if os.path.isdir(next_item) or next_item.startswith('.'):
+            # print("Skipping: " + next_item)
             continue
 
         filename, extension = os.path.splitext(next_item)
