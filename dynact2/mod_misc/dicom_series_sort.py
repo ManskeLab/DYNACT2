@@ -11,6 +11,7 @@ Description: Sorts all DICOMs in the provided directory into subdirectories
 import os
 import sys
 import errno
+import shutil
 import pydicom
 import argparse
 
@@ -50,6 +51,8 @@ def print_progress(iteration, total, prefix="", suffix="", decimals=1, bar_lengt
     filled_length = int(round(bar_length * iteration / float(total)))
     bar = "█" * filled_length + "-" * (bar_length - filled_length)
 
+    # Set encoding to UTF8 (this only works for Python v3.7+)
+    sys.stdout.reconfigure(encoding='utf-8')
     sys.stdout.write("\r%s |%s| %s%s %s" % (prefix, bar, percents, "%", suffix)),
 
     if iteration == total:
@@ -57,30 +60,27 @@ def print_progress(iteration, total, prefix="", suffix="", decimals=1, bar_lengt
     sys.stdout.flush()
 
 
-if __name__ == "__main__":
-    # Parse input arguements
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "input_path", type=str, help="The input DICOM directory (compressed files)"
-    )
-    args = parser.parse_args()
+def dicom_series_sort(input_path):
+    if input_path.endswith('.zip'):
+        extract_dir = os.path.splitext(input_path)[0]
+        shutil.unpack_archive(input_path, extract_dir, ".zip")
+        input_path = extract_dir
+        input_path = os.path.join(input_path, "IMAGES")
+    else:
+        input_path = os.path.join(input_path, "RAW")
 
-    input_path = args.input_path
-
-    # Check if the provided directory exists
-    if not os.path.exists(input_path):
-        print("Error: provided directory does not exist!")
-        sys.exit(1)
-
-    # Get the absolute path of the directory provided. Use os.path.join() to avoid slash direction issues between Mac, Linux, and Windows
-    input_path_abs = os.path.abspath(input_path)
+    if os.path.isdir(os.path.join(input_path, "BONE PLUS")):
+        return
+    if ("001" in input_path) or ("002" in input_path) or \
+        ("200" in input_path) or ("003" in input_path):
+        return
 
     # Get the number of files in a directory for the progress bar
     l = len(
         [
             name
-            for name in os.listdir(input_path_abs)
-            if os.path.isfile(os.path.join(input_path_abs, name))
+            for name in os.listdir(input_path)
+            if os.path.isfile(os.path.join(input_path, name))
         ]
     )
 
@@ -88,10 +88,10 @@ if __name__ == "__main__":
     i = 0
 
     # Loop through all DICOMs in the provided directory, rename, decompress, and copy to the appropriate directory
-    for file in os.listdir(input_path_abs):
+    for file in os.listdir(input_path):
         filename = os.fsdecode(file)
 
-        current_file_path = os.path.join(input_path_abs, filename)
+        current_file_path = os.path.join(input_path, filename)
 
         # Check if we have a file
         if os.path.isfile(current_file_path):
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             # Make the instance number have the same number of digits for all images
             instance_number_str = str(instance_number).rjust(4, "0")
 
-            series_file_path = os.path.join(input_path_abs, series_description)
+            series_file_path = os.path.join(input_path, series_description)
             new_file_name = "IM_" + instance_number_str + ".dcm"
 
             # Uncompressed Implicit VR Little-endian = 1.2.840.10008.1.2
@@ -134,6 +134,11 @@ if __name__ == "__main__":
                 or (tsUID == "1.2.840.10008.1.2.1")
                 or (tsUID == "1.2.840.10008.1.2.2")
             ):
+                # Sometimes we encouter a DICOM image that does not contain PixelData.
+                # PixelData is stored at the key: 0x7FE0, 0x0010.
+                # Skip any DICOM images that do not contain PixelData.
+                if not (0x7FE0, 0x0010) in dicom:
+                    continue
                 dicom.decompress()
 
             # If the series description directory doesn't already exist, create one
@@ -155,3 +160,34 @@ if __name__ == "__main__":
                 i + 1, l, prefix="Progress:", suffix="Complete", bar_length=50
             )
             i = i + 1
+
+
+
+if __name__ == "__main__":
+    # Parse input arguements
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "input_path", type=str, help="The input DICOM directory (compressed files)"
+    )
+    args = parser.parse_args()
+
+    input_path = args.input_path
+
+    # Check if the provided directory exists
+    if not os.path.exists(input_path):
+        print("Error: provided directory does not exist!")
+        sys.exit(1)
+
+    # Get the absolute path of the directory provided. Use os.path.join() to avoid slash direction issues between Mac, Linux, and Windows
+    input_path_abs = os.path.abspath(input_path)
+    
+    for directory in os.listdir(input_path_abs):
+        d = os.path.join(input_path_abs, directory)
+        
+        if os.path.isdir(d):
+            for subdirectory in os.listdir(d):
+                subd = os.path.join(d, subdirectory)
+
+                if os.path.isdir(subd) or subd.endswith(".zip"):
+                    print("Decompressing:", subd)
+                    dicom_series_sort(subd)
