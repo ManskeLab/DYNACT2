@@ -1,0 +1,302 @@
+#!/bin/bash -u
+BATCH_RESAMPLE_SCRIPT="A:\\Projects\\DYNACT2\\dynact2\\mod_img_proc\\batch_resample.py"
+
+#--------------
+# DYNACT2_200
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_200\\DYNACT2_200_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_201
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_201\\DYNACT2_201_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_202
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_202\\DYNACT2_202_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_203
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_203\\DYNACT2_203_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_204
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_204\\DYNACT2_204_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_205
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_205\\DYNACT2_205_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_206
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_206\\DYNACT2_206_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_207
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_207\\DYNACT2_207_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_208
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_208\\DYNACT2_208_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_209
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_209\\DYNACT2_209_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_210
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_210\\DYNACT2_210_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_211
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_211\\DYNACT2_211_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_212
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_212\\DYNACT2_212_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_213
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_213\\DYNACT2_213_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+
+#--------------
+# DYNACT2_214
+#--------------
+IMAGE_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_ABAD\\BONE PLUS"
+OUTPUT_ABAD="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_ABAD"
+IMAGE_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_OPP\\BONE PLUS"
+OUTPUT_OPP="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_OPP"
+IMAGE_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_KEY\\BONE PLUS"
+OUTPUT_KEY="D:\\OneDrive - University of Calgary\\ManskeLabImages\\DYNACT\\06 - DYNACT2\\models\\DYNACT2_214\\DYNACT2_214_KEY"
+
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_ABAD}\" \"${OUTPUT_ABAD}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_OPP}\" \"${OUTPUT_OPP}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
+cmd="python \"${BATCH_RESAMPLE_SCRIPT}\" \"${IMAGE_KEY}\" \"${OUTPUT_KEY}\" 0.293 0.293 0.293 -s 512 512 200"
+echo $cmd
+eval $cmd
