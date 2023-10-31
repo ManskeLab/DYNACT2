@@ -73,8 +73,8 @@ def registerStacks(fixedImage, movingImage, initialTMAT, side):
 
     # Similarity metric settings
     # Use a fixed seed point for random image sampling for reproducible results
-    reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
-    # reg.SetMetricAsMeanSquares()
+    # reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    reg.SetMetricAsMeanSquares()
     # reg.SetMetricAsCorrelation()
     reg.SetMetricSamplingStrategy(reg.RANDOM)
     # reg.SetMetricSamplingPercentage(0.01, 0)
@@ -86,7 +86,7 @@ def registerStacks(fixedImage, movingImage, initialTMAT, side):
     # Optimizer settings
     reg.SetOptimizerAsGradientDescent(
         learningRate=5.0,
-        numberOfIterations=500,
+        numberOfIterations=300,
         convergenceMinimumValue=1e-10,
         convergenceWindowSize=500,
     )

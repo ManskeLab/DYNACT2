@@ -216,8 +216,15 @@ if __name__ == "__main__":
         moving_img_registered_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.nii")
         moving_img_tmat_path = os.path.join(output_path, "WBCT_TO_DYNACT_REG.tfm")
     else:
-        moving_img_registered_path = os.path.join(output_path, study_id + "_WBCT_TO_DYNACT_REG.nii")
-        moving_img_tmat_path = os.path.join(output_path, study_id + "_WBCT_TO_DYNACT_REG.tfm")
+        if "ABAD" in fixed_img_path:
+            moving_img_registered_path = os.path.join(output_path, study_id + "_WBCT_TO_ABAD_REG.nii")
+            moving_img_tmat_path = os.path.join(output_path, study_id + "_WBCT_TO_ABAD_REG.tfm")
+        elif "OPP" in fixed_img_path:
+            moving_img_registered_path = os.path.join(output_path, study_id + "_WBCT_TO_OPP_REG.nii")
+            moving_img_tmat_path = os.path.join(output_path, study_id + "_WBCT_TO_OPP_REG.tfm")
+        elif "KEY" in fixed_img_path:
+            moving_img_registered_path = os.path.join(output_path, study_id + "_WBCT_TO_KEY_REG.nii")
+            moving_img_tmat_path = os.path.join(output_path, study_id + "_WBCT_TO_KEY_REG.tfm")
 
     moving_resampled, final_transform = main(fixed_img_path, moving_img_path, init_tfm_path)
 

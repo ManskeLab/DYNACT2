@@ -42,8 +42,8 @@ if __name__ == "__main__":
     seg = args.seg
 
     seg_path = os.path.splitext(seg)[0]
-    mc1_seg_path = seg_path + "_MC1_PERI.nii"
-    trp_seg_path = seg_path + "_TRP_PERI.nii"
+    mc1_seg_path = seg_path + "_MC1.nii"
+    trp_seg_path = seg_path + "_TRP.nii"
 
     seg_img = sitk.ReadImage(seg, sitk.sitkUInt8)
 

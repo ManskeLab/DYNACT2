@@ -66,13 +66,10 @@ def dicom_series_sort(input_path):
         shutil.unpack_archive(input_path, extract_dir, ".zip")
         input_path = extract_dir
         input_path = os.path.join(input_path, "IMAGES")
-    else:
-        input_path = os.path.join(input_path, "RAW")
+    # else:
+    #     input_path = os.path.join(input_path, "RAW")
 
     if os.path.isdir(os.path.join(input_path, "BONE PLUS")):
-        return
-    if ("001" in input_path) or ("002" in input_path) or \
-        ("200" in input_path) or ("003" in input_path):
         return
 
     # Get the number of files in a directory for the progress bar
@@ -180,14 +177,12 @@ if __name__ == "__main__":
 
     # Get the absolute path of the directory provided. Use os.path.join() to avoid slash direction issues between Mac, Linux, and Windows
     input_path_abs = os.path.abspath(input_path)
+    print("Decompressing:", input_path_abs)
+    dicom_series_sort(input_path_abs)
     
-    for directory in os.listdir(input_path_abs):
-        d = os.path.join(input_path_abs, directory)
-        
-        if os.path.isdir(d):
-            for subdirectory in os.listdir(d):
-                subd = os.path.join(d, subdirectory)
-
-                if os.path.isdir(subd) or subd.endswith(".zip"):
-                    print("Decompressing:", subd)
-                    dicom_series_sort(subd)
+    # for directory in os.listdir(input_path_abs):
+    #     d = os.path.join(input_path_abs, directory)
+    #     print(d)
+    #     if os.path.isdir(d) or d.endswith(".zip"):
+    #         print("Decompressing:", d)
+    #         dicom_series_sort(d)

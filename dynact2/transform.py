@@ -163,7 +163,13 @@ if __name__ == "__main__":
         # image
         outDirectory, outFilename = os.path.split(movingImage)
         outBasename, outExtension = os.path.splitext(outFilename)
-        outputFile = os.path.join(outDirectory, outBasename + "_TRANSF" + outExtension)
+
+        if "ABAD" in fixedImage:
+            outputFile = os.path.join(outDirectory, outBasename + "_ABAD_TRANSF" + outExtension)
+        elif "OPP" in fixedImage:
+            outputFile = os.path.join(outDirectory, outBasename + "_OPP_TRANSF" + outExtension)
+        elif "KEY" in fixedImage:
+            outputFile = os.path.join(outDirectory, outBasename + "_KEY_TRANSF" + outExtension)
 
         print()
         print(
