@@ -16,14 +16,14 @@ import SimpleITK as sitk
 
 # Dictionary for interpolator types
 interpolatorDict = {
-    "near": sitk.sitkNearestNeighbor,
+    "nn": sitk.sitkNearestNeighbor,
     "linear": sitk.sitkLinear,
     "spline": sitk.sitkBSpline,
     "gaussian": sitk.sitkGaussian,
 }
 
 
-def resampleFullExtent(image, fixed, tmat):
+def resampleFullExtent(image, fixed, tmat, interp):
     """
     Resamples an input image while keeping the image's original extent.
     """
@@ -64,13 +64,13 @@ def resampleFullExtent(image, fixed, tmat):
         int((maxY - minY) / outputSpacing[1]),
         int((maxZ - minZ) / outputSpacing[2]),
     ]
-
+    
     # Transform the image keeping the original extent
     resampledImage = sitk.Resample(
         image,
         outputSize,
         tfm,
-        sitk.sitkLinear,
+        interp,
         outputOrigin,
         outputSpacing,
         fixed.GetDirection(),
@@ -170,6 +170,10 @@ if __name__ == "__main__":
             outputFile = os.path.join(outDirectory, outBasename + "_OPP_TRANSF" + outExtension)
         elif "KEY" in fixedImage:
             outputFile = os.path.join(outDirectory, outBasename + "_KEY_TRANSF" + outExtension)
+        elif "HRpQCT" in fixedImage:
+            outputFile = os.path.join(outDirectory, outBasename + "_TO_XCT_TRANSF" + outExtension)
+        else:
+            outputFile = os.path.join(outDirectory, outBasename + "_TRANSF" + outExtension)
 
         print()
         print(
@@ -205,7 +209,7 @@ if __name__ == "__main__":
     print()
     print("RESAMPLING: ")
     print(f"{movingImage}")
-    resampled = resampleFullExtent(moving, fixed, tfm)
+    resampled = resampleFullExtent(moving, fixed, tfm, interpolator)
 
     print()
     print("WRITING: ")
