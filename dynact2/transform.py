@@ -23,7 +23,7 @@ interpolatorDict = {
 }
 
 
-def resampleFullExtent(image, fixed, tmat, interp):
+def resampleFullExtent(image, fixed, tmat, interp=sitk.sitkNearestNeighbor):
     """
     Resamples an input image while keeping the image's original extent.
     """
@@ -55,7 +55,7 @@ def resampleFullExtent(image, fixed, tmat, interp):
     maxZ = max(extremePointsTransformed, key=lambda p: p[2])[2]
 
     outputSpacing = image.GetSpacing()
-    outputDirection = image.GetDirection()
+    outputDirection = fixed.GetDirection()
     outputOrigin = [minX, minY, minZ]
 
     # Compute grid size based on the physical size and spacing
@@ -64,20 +64,24 @@ def resampleFullExtent(image, fixed, tmat, interp):
         int((maxY - minY) / outputSpacing[1]),
         int((maxZ - minZ) / outputSpacing[2]),
     ]
-    
-    # Transform the image keeping the original extent
-    resampledImage = sitk.Resample(
-        image,
-        outputSize,
-        tfm,
-        interp,
-        outputOrigin,
-        outputSpacing,
-        fixed.GetDirection(),
-        0.0,
-        fixed.GetPixelID(),
-    )
 
+    # interp = interpolatorDict[interp]
+ 
+    # Transform the image keeping the original extent
+    resampledImage = sitk.Resample(image, fixed, transform=tmat, interpolator=interp)
+    # resampledImage = sitk.Resample(
+    #     image,
+    #     outputSize,
+    #     tmat,
+    #     interp,
+    #     fixed.GetOrigin(),
+    #     outputSpacing,
+    #     outputDirection,
+    #     0.0,
+    #     image.GetPixelID(),
+    # )
+
+    print(not sitk.GetArrayFromImage(resampledImage).any())
     return resampledImage
 
 
