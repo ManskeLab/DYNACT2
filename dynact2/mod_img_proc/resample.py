@@ -51,12 +51,13 @@ def Resample(
     Returns
     -------
     """
-    print(input_path)
-    reader = sitk.ImageSeriesReader()
-    dicom_names = reader.GetGDCMSeriesFileNames(input_path)
-    reader.SetFileNames(dicom_names)
+    # print(input_path)
+    # reader = sitk.ImageSeriesReader()
+    # dicom_names = reader.GetGDCMSeriesFileNames(input_path)
+    # reader.SetFileNames(dicom_names)
 
-    image = reader.Execute()
+    # image = reader.Execute()
+    image = sitk.ReadImage(input_path)
     image_size = image.GetSize()
     image_origin = image.GetOrigin()
     image_spacing = image.GetSpacing()
@@ -258,7 +259,7 @@ if __name__ == "__main__":
     # Input image information
     input_pathAbs = os.path.abspath(inputImage)
 
-    resample(
+    Resample(
         input_pathAbs,
         outputImage,
         new_spacing,
