@@ -11,7 +11,7 @@ def autocontour(
 ):
     # Mu_Water, Rescale_Slope, and Rescale_Intercept are hard coded
     # To-Do: get directly from the image, if possible, or from the user
-    img = convert_hu_to_bmd(img, mu_water, rescale_slope, rescale_intercept)
+    # img = convert_hu_to_bmd(img, mu_water, rescale_slope, rescale_intercept)
 
     auto_contour = AutocontourKnee()
     prx_mask = auto_contour.get_periosteal_mask(img, 1)
