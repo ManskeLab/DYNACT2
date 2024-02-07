@@ -14,8 +14,8 @@ def nifti_reader(input_path):
 def marching_cubes(vtk_image):
     marching_cubes = vtk.vtkMarchingCubes()
     marching_cubes.SetInputData(vtk_image)
-    marching_cubes.ComputeNormalsOn()
-    marching_cubes.SetValue(0, 1)
+    marching_cubes.ComputeNormalsOff()
+    marching_cubes.SetValue(0, 0.5)
     marching_cubes.Update()
     surface = marching_cubes.GetOutput()
 
@@ -29,7 +29,7 @@ def polydata_writer(polydata_surface, output_path):
     polydata_writer.Update()
 
 
-def main(image_path, polydata_path):
+def image_to_polydata(image_path, polydata_path):
     image = nifti_reader(image_path)
     surface = marching_cubes(image)
     polydata_writer(surface, polydata_path)
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     basename = os.path.splitext(os.path.basename(image_path))[0]
     polydata_path = os.path.join(output_dir, basename + ".vtk")
 
-    main(image_path, polydata_path)
+    image_to_polydata(image_path, polydata_path)

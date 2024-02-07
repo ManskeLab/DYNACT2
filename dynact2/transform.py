@@ -81,7 +81,6 @@ def resampleFullExtent(image, fixed, tmat, interp=sitk.sitkNearestNeighbor):
     #     image.GetPixelID(),
     # )
 
-    print(not sitk.GetArrayFromImage(resampledImage).any())
     return resampledImage
 
 
