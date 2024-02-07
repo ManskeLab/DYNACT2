@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("xct_seg_path", type=str, help="Bone segmentation")
     parser.add_argument("xct_js_path", type=str, help="Joint surface segmentation")
-    parser.add_argument("slice_axis", type=bool, default=True, help="Z is axial or Y is axial (default=True is Z is axial)")
+    parser.add_argument("slice_axis", type=int, default=1, help="Z is axial or Y is axial (default=True is Z is axial)")
 
     args = parser.parse_args()
     xct_seg_path = args.xct_seg_path
@@ -48,13 +48,17 @@ def main():
     aligned_image_origin = shape_stats2.GetOrientedBoundingBoxOrigin(1)
     aligned_image_size = [int(math.ceil(shape_stats2.GetOrientedBoundingBoxSize(1)[i] / aligned_image_spacing[i])) for i in range(3)]
     direction_mat = shape_stats.GetOrientedBoundingBoxDirection(1)
+
+    # The order of the columns in the rotation matrix from the oriented bounding box changes with the shape
+    # So depending on the shape/image, we may need to shuffle the X, Y, Z axes
+    # This mostly affects the XCT MC1 bones. If you change the order, change if in both places in this script to match
     aligned_image_direction = [
-        direction_mat[0],
-        direction_mat[3],
-        direction_mat[6],
         direction_mat[1],
         direction_mat[4],
         direction_mat[7],
+        direction_mat[0],
+        direction_mat[3],
+        direction_mat[6],
         direction_mat[2],
         direction_mat[5],
         direction_mat[8],
@@ -138,11 +142,18 @@ def main():
     # For the MC1, we only want the top 25% of the bone for vBMD
     # Use the WBCT scan of the MC1 to calculate the length of the MC1
     if "mc1" in xct_seg_path.lower():
-        wbct_path = xct_seg_path.split(str(os.path.sep))
-        study = wbct_path[-3][:-7]
-        wbct_path = str(os.path.sep).join(wbct_path[:-3])
-        wbct_path = str(os.path.sep).join([wbct_path, study + "_WBCT"])
-        wbct_bone_path = str(os.path.sep).join([wbct_path, study + "_WBCT_CROP_PERI_MC1_BB_REORIENT.nii"])
+        wbct_path = xct_seg_path.split(str("/"))
+        print(wbct_path)
+        if "hrpqct" in xct_seg_path.lower():
+            study = wbct_path[-4]
+            wbct_path = str("/").join(wbct_path[:-3])
+            wbct_path = str("/").join([wbct_path, study + "_WBCT"])
+            wbct_bone_path = str("/").join([wbct_path, study + "_WBCT_CROP_PERI_MC1_BB_REORIENT.nii"])
+        else:
+            study = wbct_path[-3]
+            wbct_path = str("/").join(wbct_path[:-2])
+            wbct_path = str("/").join([wbct_path, study + "_WBCT"])
+            wbct_bone_path = str("/").join([wbct_path, study + "_WBCT_CROP_PERI_MC1_BB_REORIENT.nii"])
         wbct_bone = sitk.ReadImage(wbct_bone_path, sitk.sitkUInt8)
 
         min_val = int(np.max(sitk.GetArrayFromImage(wbct_bone)))
@@ -158,12 +169,12 @@ def main():
         aligned_image_size = [int(math.ceil(shape_stats.GetOrientedBoundingBoxSize(1)[i] / aligned_image_spacing[i])) for i in range(3)]
         direction_mat = shape_stats.GetOrientedBoundingBoxDirection(1)
         aligned_image_direction = [
-            direction_mat[0],
-            direction_mat[3],
-            direction_mat[6],
             direction_mat[1],
             direction_mat[4],
             direction_mat[7],
+            direction_mat[0],
+            direction_mat[3],
+            direction_mat[6],
             direction_mat[2],
             direction_mat[5],
             direction_mat[8],
@@ -176,13 +187,28 @@ def main():
 
         align_wbct_bone = resampler.Execute(wbct_bone)
         mc1_length = int(math.ceil((math.ceil(0.25*align_wbct_bone.GetSize()[2]*align_wbct_bone.GetSpacing()[2])/bb_masked_bone.GetSpacing()[2])))
-        if slice_axis:
-            bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+        print(mc1_length)
+
+        if "hrpqct" in xct_seg_path.lower(): 
+            if slice_axis:
+                # bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+                bb_masked_bone = bb_masked_bone[:, :, :mc1_length]
+            else:
+                bb_masked_bone = bb_masked_bone[:, :, mc1_length:]
         else:
-            bb_masked_bone = bb_masked_bone[:, :, mc1_length:]
-        # bb_masked_bone = bb_masked_bone[size_z-mc1_length:, :, :]
-        # bb_masked_bone = sitk.Resample(bb_masked_bone, obb_img, interpolator=sitk.sitkNearestNeighbor)
-        # bb_masked_bone = bounding_box(masked_bone, min_val, min_val)
+            if slice_axis:
+                # bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+                print(bb_masked_bone.GetSize())
+                if "key" in xct_seg_path.lower():
+                    bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+                else:
+                    bb_masked_bone = bb_masked_bone[:, :, :mc1_length]
+            else:
+                # bb_masked_bone = bb_masked_bone[:, :, mc1_length:]
+                bb_masked_bone = bb_masked_bone[0:mc1_length:, :, :]
+            # bb_masked_bone = bb_masked_bone[size_z-mc1_length:, :, :]
+            # bb_masked_bone = sitk.Resample(bb_masked_bone, obb_img, interpolator=sitk.sitkNearestNeighbor)
+            # bb_masked_bone = bounding_box(masked_bone, min_val, min_val)
         sitk.WriteImage(bb_masked_bone, os.path.splitext(xct_seg_path)[0] + "_ROTATED_BB_CROP.nii")
 
     size_x = bb_masked_bone.GetSize()[0]
