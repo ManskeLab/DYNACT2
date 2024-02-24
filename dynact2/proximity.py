@@ -250,7 +250,7 @@ def main(wbct_mask_dir, dynact_reg_mask_dir, output_path):
         print(frame)
         frame_1 = int(frame[0])
         frame_2 = int(frame[1])
-        if int(frame_1) > 13 or int(frame_2) > 13:
+        if int(frame_1) > 17 or int(frame_2) > 17:
             continue
 
         print("Processing Frame {}".format(int(frame_2)), flush=True)
@@ -436,7 +436,7 @@ def main(wbct_mask_dir, dynact_reg_mask_dir, output_path):
         output_arr = np.vstack((output_arr, frame_arr))
         print()
         
-    output_csv = os.path.join(output_path, "contact_area.csv")
+    output_csv = os.path.join(output_path, study_id + "_" + movement + "_contact_area.csv")
     np.savetxt(output_csv, output_arr, delimiter=",", fmt="%s")
 
 
