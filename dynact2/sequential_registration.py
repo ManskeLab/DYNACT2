@@ -19,6 +19,8 @@ import SimpleITK as sitk
 from math import isclose
 from bounding_box_quad import bounding_box
 
+np.seterr(divide='ignore', invalid='ignore')
+
 def command_iteration(method):
     """
     Prints the registration method's metric and optimizer position during the
@@ -385,6 +387,10 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # Multiprocess the MC1 and TRP for each frame to speed things up
         print("Registering MC1 volume {} to volume {}".format(item-1, item), flush=True)
 
+        # a = sitk.Resample(prev_mc1_mask, current_image, transform=tmat_hand_init, interpolator=sitk.sitkNearestNeighbor)
+        # sitk.WriteImage(a, os.path.join(output_dir, "FinalTFMs/aaaaa.nii"))
+        # sys.exit()
+
         if 0 < counter <=10:
             prev_tfm = sitk.ReadTransform(os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm"))
             register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
@@ -396,7 +402,11 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
             counter = 0
         
         prev_grayscale = current_image
-        prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+
+        if item == 2:
+            prev_mc1_mask = frame_1_mc1_seg
+        else:
+            prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
 
         # Check the mean intensity and compare to "gold standard" (i.e., frame #1)
         mask = bounding_box(prev_mc1_mask, 1, 1)
@@ -404,6 +414,11 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         mask = sitk.Resample(mask[:,:,0:int(mask.GetSize()[2]*0.75)], mask)
         prev_grayscale = sitk.Mask(prev_grayscale, mask)
         new_intensity_mc1 = ((sitk.GetArrayFromImage(prev_grayscale)[(sitk.GetArrayFromImage(mask) > 0) & (np.absolute(sitk.GetArrayFromImage(prev_grayscale)) > 0)])).mean()
+
+        # print(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"))
+        # print(sitk.GetArrayFromImage(prev_grayscale)[sitk.GetArrayFromImage(prev_grayscale)>0])
+        # sitk.WriteImage(mask, os.path.join(output_dir, "FinalTFMs/aaaaa.nii"))
+        # sys.exit()
 
         print("REF MC1 INTENSITY:", start_intensity_mc1, flush=True)
         print("CURRENT MC1 INTENSITY:", new_intensity_mc1, flush=True)
@@ -520,7 +535,11 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
             counter = 0
         
         prev_grayscale = current_image
-        prev_trp_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_TRP_MASK_REG.nii"), sitk.sitkUInt8)
+
+        if item == 2:
+            prev_trp_mask = frame_1_trp_seg
+        else:
+            prev_trp_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_TRP_MASK_REG.nii"), sitk.sitkUInt8)
 
         # Check the mean intensity and compare to "gold standard" (i.e., frame #1)
         mask = bounding_box(prev_trp_mask, 1, 1)
