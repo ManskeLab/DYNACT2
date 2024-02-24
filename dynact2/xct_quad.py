@@ -53,12 +53,12 @@ def main():
     # So depending on the shape/image, we may need to shuffle the X, Y, Z axes
     # This mostly affects the XCT MC1 bones. If you change the order, change if in both places in this script to match
     aligned_image_direction = [
-        direction_mat[1],
-        direction_mat[4],
-        direction_mat[7],
         direction_mat[0],
         direction_mat[3],
         direction_mat[6],
+        direction_mat[1],
+        direction_mat[4],
+        direction_mat[7],
         direction_mat[2],
         direction_mat[5],
         direction_mat[8],
@@ -169,12 +169,12 @@ def main():
         aligned_image_size = [int(math.ceil(shape_stats.GetOrientedBoundingBoxSize(1)[i] / aligned_image_spacing[i])) for i in range(3)]
         direction_mat = shape_stats.GetOrientedBoundingBoxDirection(1)
         aligned_image_direction = [
-            direction_mat[1],
-            direction_mat[4],
-            direction_mat[7],
             direction_mat[0],
             direction_mat[3],
             direction_mat[6],
+            direction_mat[1],
+            direction_mat[4],
+            direction_mat[7],
             direction_mat[2],
             direction_mat[5],
             direction_mat[8],
@@ -198,9 +198,9 @@ def main():
         else:
             if slice_axis:
                 # bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
-                print(bb_masked_bone.GetSize())
                 if "key" in xct_seg_path.lower():
-                    bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+                    # bb_masked_bone = bb_masked_bone[:, :, size_z-mc1_length:]
+                    bb_masked_bone = bb_masked_bone[:, :, :mc1_length]
                 else:
                     bb_masked_bone = bb_masked_bone[:, :, :mc1_length]
             else:
