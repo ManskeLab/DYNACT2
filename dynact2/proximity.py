@@ -250,7 +250,7 @@ def main(wbct_mask_dir, dynact_reg_mask_dir, output_path):
         print(frame)
         frame_1 = int(frame[0])
         frame_2 = int(frame[1])
-        if int(frame_1) > 17 or int(frame_2) > 17:
+        if int(frame_1) > 26 or int(frame_2) > 26:
             continue
 
         print("Processing Frame {}".format(int(frame_2)), flush=True)

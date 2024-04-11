@@ -78,17 +78,17 @@ def registerStacks(fixedImage, movingImage, initialTMAT, side):
     # reg.SetMetricAsCorrelation()
     reg.SetMetricSamplingStrategy(reg.RANDOM)
     # reg.SetMetricSamplingPercentage(0.01, 0)
-    reg.SetMetricSamplingPercentagePerLevel([0.75, 0.5, 0.1], 0)
+    reg.SetMetricSamplingPercentagePerLevel([0.5, 0.25, 0.01], 0)
     # reg.SetMetricSamplingPercentagePerLevel([0.1, 0.1, 0.1], 0)
 
     reg.SetInterpolator(sitk.sitkBSpline)
 
     # Optimizer settings
     reg.SetOptimizerAsGradientDescent(
-        learningRate=5.0,
-        numberOfIterations=300,
-        convergenceMinimumValue=1e-10,
-        convergenceWindowSize=500,
+        learningRate=0.1,
+        numberOfIterations=150,
+        convergenceMinimumValue=1e-6,
+        convergenceWindowSize=20,
     )
     reg.SetOptimizerScalesFromPhysicalShift()
 

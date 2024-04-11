@@ -64,17 +64,17 @@ def batch_resample(
 
     """
     try:
-        os.makedirs(os.path.join(input_path[0:-10], "RESAMPLED"))
+        os.makedirs(os.path.join(input_path[0:-24], "RESAMPLED"))
     except FileExistsError:
         pass
 
     for next_dir in os.listdir(input_path):
         output_path = os.path.join(
-            os.path.join(input_path[0:-10], "RESAMPLED"), next_dir + "_Resampled.nii"
+            os.path.join(input_path[0:-24], "RESAMPLED"), next_dir[:-4] + "_Resampled.nii"
         )
         next_dir = os.path.join(input_path, next_dir)
 
-        if os.path.isdir(next_dir):
+        if os.path.isfile(next_dir):
             Resample(
                 next_dir,
                 output_path,

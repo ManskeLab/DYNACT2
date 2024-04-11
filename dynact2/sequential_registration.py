@@ -192,8 +192,8 @@ def initialize_tfm(fixed, moving):
     tmat = sitk.CenteredTransformInitializer(
         fixed,
         moving,
-        sitk.Euler3DTransform(),
-        sitk.CenteredTransformInitializerFilter.MOMENTS,
+        sitk.Similarity3DTransform(),
+        sitk.CenteredTransformInitializerFilter.GEOMETRY,
     )
 
     return tmat
@@ -218,14 +218,15 @@ def registration(init_tmat, fixed, moving):
     reg = sitk.ImageRegistrationMethod()
 
     # Similarity metric settings:
-    reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    # reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    reg.SetMetricAsMeanSquares()
     reg.SetMetricSamplingStrategy(reg.RANDOM)
     # reg.SetMetricSamplingPercentage(0.001)
-    reg.SetMetricSamplingPercentagePerLevel([0.1, 0.01, 0.001], 0)
+    reg.SetMetricSamplingPercentagePerLevel([0.1, 0.01, 0.01], 0)
     reg.SetInterpolator(sitk.sitkLinear)
-    reg.SetOptimizerAsRegularStepGradientDescent(learningRate=2.0,
-        minStep=1e-4,
-        numberOfIterations=150,
+    reg.SetOptimizerAsRegularStepGradientDescent(learningRate=0.5,
+        minStep=1e-8,
+        numberOfIterations=500,
         gradientMagnitudeTolerance=1e-8)
     reg.SetOptimizerScalesFromPhysicalShift()
     reg.SetShrinkFactorsPerLevel(shrinkFactors=[4, 2, 1])
@@ -267,7 +268,8 @@ def register_multiprocess(bone, volume_num, bone_seg_ref, grayscale_volume,
         init_tfm = init_tfm.GetNthTransform(0)
 
     # sitk.WriteImage(sitk.Resample(masked_next, grayscale_volume, transform=init_tfm), os.path.join(output_seg_dir, "test.nii"))
-
+    # sys.exit()
+        
     # print("Running registration...", flush=True)
     final_tfm = registration(init_tfm, masked_next, masked_bone)
 
@@ -323,8 +325,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     if frame_start == 1:
         mc1_seg_start = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
     else:
-        mc1_seg = os.path.join(output_seg_dir, "VOLUME_" + str(frame_start-1) + "_TO_" + str(frame_start) + "_MC1_MASK_REG.nii")
-        mc1_seg_start = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
+        mc1_seg_start = sitk.ReadImage(os.path.join(output_seg_dir, "VOLUME_" + str(frame_start-1) + "_TO_" + str(frame_start) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
 
     # 1. Mask bones from reference image
     mc1_seg_resampled = sitk.Resample(mc1_seg_start, start_frame_dynact, interpolator=sitk.sitkNearestNeighbor)
@@ -344,21 +345,38 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
 
         if not (item % 18):
             print("Reached end of full cycle.", flush=True)
-            prev_grayscale = start_frame_dynact
-            prev_mc1_mask = mc1_seg_resampled
-
-        if 0 < counter <= 10:
-            prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii"), sitk.sitkFloat32)
-            prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
-        if reset_counter >= 10:
-            print("Error: Cannot compute adequate alignment. 10 attempts completed. Exiting...", flush=True)
-            sys.exit()
+            prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
+            prev_mc1_mask = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
+            print("prev_grayscale:", os.path.join(dynact_dir, "Volume_1_Resampled.nii"))
+            print("prev_mc1_mask:", mc1_seg)
+        # elif item == 16:
+        #     print("15 to 16", flush=True)
+        #     prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_17_Resampled.nii"), sitk.sitkFloat32)
+        #     prev_mc1_mask = sitk.ReadImage(os.path.join(output_seg_dir, "VOLUME_16_TO_17_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+        #     print("prev_grayscale:", os.path.join(dynact_dir, "Volume_17_Resampled.nii"))
+        #     print("prev_mc1_mask:", os.path.join(output_seg_dir, "VOLUME_16_TO_17_MC1_MASK_REG.nii"))
+        else:
+            if 0 < counter <= 5:
+                if item == 2:
+                    prev_grayscale = start_frame_dynact
+                    prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_1_TO_2_MC1_MASK_REG2.nii"), sitk.sitkUInt8)
+                    print("prev_grayscale:", start_frame_dynact_path)
+                    print("prev_mc1_mask:", os.path.join(output_dir, "RegisteredMasks/VOLUME_1_TO_2_MC1_MASK_REG2.nii"))
+                else:
+                    prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii"), sitk.sitkFloat32)
+                    prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+                    print("prev_grayscale:", os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii"))
+                    print("prev_mc1_mask:", os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii"))
+            if reset_counter >= 5:
+                print("Error: Cannot compute adequate alignment. 5 attempts completed. Exiting...", flush=True)
+                sys.exit()
 
         print("*****************************************************************", flush=True)
         print("Registering volume {} to volume {}".format(item-1, item), flush=True)
 
         # Get the next volume file
         current_file_path = os.path.join(dynact_dir, "Volume_" + str(item) + "_Resampled.nii")
+        print("current_file_path:", current_file_path)
 
         print("Previous Frame: {}".format(item-1), flush=True)
         print("Current Frame: {}".format(item), flush=True)
@@ -375,7 +393,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         tmat_hand_init = sitk.CenteredTransformInitializer(
             current_hand_seg,
             prev_hand_seg,
-            sitk.Euler3DTransform(),
+            sitk.Similarity3DTransform(),
             sitk.CenteredTransformInitializerFilter.GEOMETRY,
         )
 
@@ -387,26 +405,28 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # Multiprocess the MC1 and TRP for each frame to speed things up
         print("Registering MC1 volume {} to volume {}".format(item-1, item), flush=True)
 
-        # a = sitk.Resample(prev_mc1_mask, current_image, transform=tmat_hand_init, interpolator=sitk.sitkNearestNeighbor)
-        # sitk.WriteImage(a, os.path.join(output_dir, "FinalTFMs/aaaaa.nii"))
-        # sys.exit()
-
-        if 0 < counter <=10:
+        if 0 < counter <=5:
             prev_tfm = sitk.ReadTransform(os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm"))
+            print("prev_tfm:", os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm"))
             register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
                                 tmat_hand_init, output_seg_dir, output_tmat_dir, prev_tfm)
         else:
+            print("prev_tfm: None")
             register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
                               tmat_hand_init, output_seg_dir, output_tmat_dir)
             reset_counter += 1
             counter = 0
         
+        # a = sitk.Resample(prev_mc1_mask, current_image, transform=tmat_hand_init, interpolator=sitk.sitkNearestNeighbor)
+        # sitk.WriteImage(a, os.path.join(output_dir, "FinalTFMs/aaaaa.nii"))
+        # sys.exit()
+
         prev_grayscale = current_image
 
         if item == 2:
-            prev_mc1_mask = frame_1_mc1_seg
-        else:
-            prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+            prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_1_TO_2_MC1_MASK_REG2.nii"), sitk.sitkUInt8)
+        # else:
+        #     prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
 
         # Check the mean intensity and compare to "gold standard" (i.e., frame #1)
         mask = bounding_box(prev_mc1_mask, 1, 1)
@@ -428,9 +448,9 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
             counter = 0
             reset_counter = 0
         else:
-            if item == 2:
-                print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
-                sys.exit()
+            # if item == 2:
+            #     print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
+            #     sys.exit()
             
             print("Trying again...", flush=True)
             counter += 1
@@ -512,7 +532,7 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
         tmat_hand_init = sitk.CenteredTransformInitializer(
             current_hand_seg,
             prev_hand_seg,
-            sitk.Euler3DTransform(),
+            sitk.Similarity3DTransform(),
             sitk.CenteredTransformInitializerFilter.GEOMETRY,
         )
 
@@ -613,11 +633,11 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0):
                                         mc1_seg, output_dir, 
                                         frame_start, frame_stop, 0.12))
     
-    # p2 = multiprocess.Process(target=trp_reg, 
-    #                               args=(dynact_dir, output_seg_dir, 
-    #                                     output_tmat_dir, filelist, 
-    #                                     trp_seg, output_dir, 
-    #                                     frame_start, frame_stop, 0.05))
+    p2 = multiprocess.Process(target=trp_reg, 
+                                  args=(dynact_dir, output_seg_dir, 
+                                        output_tmat_dir, filelist, 
+                                        trp_seg, output_dir, 
+                                        frame_start, frame_stop, 0.05))
 
     p1.start() 
     # p2.start() 
@@ -742,7 +762,7 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0):
     #     tmat_hand_init = sitk.CenteredTransformInitializer(
     #         current_hand_seg,
     #         prev_hand_seg,
-    #         sitk.Euler3DTransform(),
+    #         sitk.Similarity3DTransform(),
     #         sitk.CenteredTransformInitializerFilter.GEOMETRY,
     #     )
 
@@ -849,7 +869,7 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0):
     #     tmat_hand_init = sitk.CenteredTransformInitializer(
     #         current_hand_seg,
     #         prev_hand_seg,
-    #         sitk.Euler3DTransform(),
+    #         sitk.Similarity3DTransform(),
     #         sitk.CenteredTransformInitializerFilter.GEOMETRY,
     #     )
 

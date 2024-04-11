@@ -27,7 +27,7 @@ def fix_mask(wbct_mask):
     mask_fix : SimpleITK.Image
         Fixed WBCT mask
     """
-    mask_fix = sitk.BinaryThreshold(wbct_mask, 1, 100, 1, 0)
+    mask_fix = sitk.BinaryThreshold(wbct_mask, 1, 127, 1, 0)
     return mask_fix
 
 

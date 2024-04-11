@@ -55,6 +55,8 @@ if __name__ == "__main__":
 
     # Transform the 4 quads for MC1 and TRP between frames
     for i in range(0, len(mc1_tfm_files), 1):
+        if i > 25:
+            break
         frame = re.findall(r'\d+', mc1_tfm_files[i])
         frame_1 = int(frame[0])
         frame_2 = int(frame[1])
@@ -79,6 +81,8 @@ if __name__ == "__main__":
         sitk.WriteImage(resampled_q4, os.path.join(output_path, "VOLUME_" + str(frame_1) + "_TO_" + str(frame_2) + "_MC1_MASK_REG_Q4.nii"))
 
     for i in range(0, len(trp_tfm_files), 1):
+        if i > 25:
+            break
         frame = re.findall(r'\d+', trp_tfm_files[i])
         frame_1 = int(frame[0])
         frame_2 = int(frame[1])

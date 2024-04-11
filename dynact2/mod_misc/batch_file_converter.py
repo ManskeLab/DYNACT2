@@ -1,8 +1,11 @@
 import os
 import shutil
 import argparse
+import numpy as np
 
 from file_converter import fileConverter
+
+np.bool = bool
 
 # Parse input arguments
 parser = argparse.ArgumentParser()
