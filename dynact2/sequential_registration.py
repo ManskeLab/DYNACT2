@@ -335,12 +335,12 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     counter = 0
     reset_counter = 0
 
-    # conversion of file paths to SimpleITK.Image types
+    # reading in Frame 1 and WBCT segmentation 
     frame_1_dynact_path = os.path.join(dynact_dir, "Volume_" + str(1) + "_Resampled.nii")
     frame_1_dynact = sitk.ReadImage(frame_1_dynact_path, sitk.sitkFloat32)
     frame_1_mc1_seg = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
 
-    # some preprocessing involving WBCT segmentation and Frame 1 
+    # some preprocessing involving Frame 1 and WBCT segmentation
     mask = bounding_box(frame_1_mc1_seg, 1, 1)
     frame_1_dynact = sitk.Resample(frame_1_dynact, mask)
     mask = sitk.Resample(mask[:,:,0:int(mask.GetSize()[2]*0.75)], mask)
@@ -356,11 +356,13 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     start_frame_dynact_path = os.path.join(dynact_dir, "Volume_" + str(frame_start) + "_Resampled.nii")
     start_frame_dynact = sitk.ReadImage(start_frame_dynact_path, sitk.sitkFloat32)
 
-    # if we're on the first frame, use the WBCT segmentation, else use the current mask 
+    # if we START on the first frame, use the WBCT segmentation, else use the current mask 
+    mc1_seg_start_dir = mc1_seg
     if frame_start == 1:
         mc1_seg_start = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
     else:
-        mc1_seg_start = sitk.ReadImage(os.path.join(output_seg_dir, "VOLUME_" + str(frame_start-1) + "_TO_" + str(frame_start) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+        mc1_seg_start_dir = os.path.join(output_seg_dir, "VOLUME_" + str(frame_start-1) + "_TO_" + str(frame_start) + "_MC1_MASK_REG.nii")
+        mc1_seg_start = sitk.ReadImage(mc1_seg_start_dir, sitk.sitkUInt8)
 
     # 1. Mask bones from reference image
     mc1_seg_resampled = sitk.Resample(mc1_seg_start, start_frame_dynact, interpolator=sitk.sitkNearestNeighbor)
@@ -381,6 +383,10 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     print(f"\tStarting Volume = {frame_start}")
     print(f"\tFrames = {frames}")
 
+    print(f"\n*******************************************************************")
+    print(f"************************* FRAME {frames[0]} *********************************")
+    print(f"*******************************************************************")
+
     index = 0
     while index < len(frames)-1:
 
@@ -389,30 +395,26 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         print(f"\n****************** Attempt #{counter+1}, Counter Resets: {reset_counter} ******************\n", flush=True)
         print("Registering volume {} to volume {}".format(item-1, item), flush=True)
 
-        # UPDATED FOR READABILITY...
-        # process for items 0 to 18 first, then process for edge case item 18 in else statement
-
-        # setting and printing the previous greyscale and mc1 masks based on attempt number
+        # setting and printing the previous greyscale and mc1 masks based on frame and attempt number
         if (item % 18 > 0):
-            if counter == 0:
-                prev_greyscale_dir = start_frame_dynact_path
-                prev_mc1_mask_dir = "////////something else..."
-            else:
-                if item == 2:
-                    prev_greyscale_dir = start_frame_dynact_path
-                    prev_mc1_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_1_TO_2_MC1_MASK_REG.nii")
-                    prev_grayscale = start_frame_dynact
-                    prev_mc1_mask = sitk.ReadImage(prev_mc1_mask_dir, sitk.sitkUInt8)
-                else:
-                    prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
-                    prev_mc1_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii")
-                    prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
-                    prev_mc1_mask = sitk.ReadImage(prev_mc1_mask_dir, sitk.sitkUInt8)
 
-            print(f"prev_grayscale: {"/".join(start_frame_dynact_path.split("/")[8:])}", flush=True)
+            # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
+            if item == 2:
+                prev_mc1_mask_dir = mc1_seg_start_dir
+                prev_mc1_mask = mc1_seg_resampled
+
+            # otherwise, use the mask mask from the previous step
+            else:
+                prev_mc1_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii")
+                prev_mc1_mask = sitk.ReadImage(prev_mc1_mask_dir, sitk.sitkUInt8)
+
+            # the previous grayscale will always be the volume from the previous step
+            prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
+            prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
+            print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
             print(f"prev_mc1_mask: {"/".join(prev_mc1_mask_dir.split("/")[8:])}", flush=True)
 
-        # if it is on the 18th frame
+        # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
         else: 
             print("Reached end of full movement cycle.", flush=True)
             prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
@@ -486,6 +488,12 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
             index += 1
             counter = 0
             reset_counter = 0
+            print("Success! Moving to next frame...")
+
+            print(f"\n*******************************************************************")
+            print(f"************************* FRAME {item + 1} *********************************")
+            print(f"*******************************************************************")
+
         else:
             print("Trying again...", flush=True)
             counter += 1
@@ -620,6 +628,7 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
             index += 1
             counter = 0
             reset_counter = 0
+
         else:
             if item == 2:
                 print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
