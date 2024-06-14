@@ -388,7 +388,7 @@ def register_multiprocess(bone, volume_num, bone_seg_ref, grayscale_volume,
     # queue.put(final_mask)
         
 
-def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, output_dir, frame_start=1, frame_stop=0, tolerance=0.1):
+def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, output_dir, frame_start=1, frame_stop=0, tolerance=0.1, metric="MeanSquares"):
     """
     Parameters
     ----------
@@ -563,7 +563,6 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # Multiprocess the MC1 and TRP for each frame to speed things up
         print("Registering MC1 volume {} to volume {}".format(item-1, item), flush=True)
 
-        metric = 'MeanSquares'
         optimizer = optimizers.get(optimizer_index)
         interpolator = interpolators.get(interpolator_index)
 
@@ -643,7 +642,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     # while loop end        
 
 
-def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, output_dir, frame_start=1, frame_stop=0, tolerance=0.1):
+def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, output_dir, frame_start=1, frame_stop=0, tolerance=0.1, metric="MeanSquares"):
     """
     Parameters
     ----------
@@ -770,7 +769,7 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
             prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
             prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
             print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
-            print(f"prev_mc1_mask: {"/".join(prev_trp_mask_dir.split("/")[8:])}", flush=True)
+            print(f"prev_trp_mask: {"/".join(prev_trp_mask_dir.split("/")[8:])}", flush=True)
 
         # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
         else: 
@@ -818,7 +817,6 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
         # Multiprocess the MC1 and TRP for each frame to speed things up
         print("Registering TRP volume {} to volume {}".format(item-1, item), flush=True)
 
-        metric = 'MeanSquares'
         optimizer = optimizers.get(optimizer_index)
         interpolator = interpolators.get(interpolator_index)
 
@@ -873,8 +871,9 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
 
         else:
             if item == 2:
-                print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
-                sys.exit()
+                continue
+                # print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
+                # sys.exit()
             else:
                 print("Trying again...", flush=True)
                 counter += 1
@@ -902,7 +901,7 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
     # while loop end        
 
 
-def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0):
+def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0, bone="MC1", metric="MeanSquares"):
     """
     Main function to perform the sequential image registration.
 
@@ -948,19 +947,20 @@ def main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start=1, frame_stop=0):
                                   args=(dynact_dir, output_seg_dir, 
                                         output_tmat_dir, filelist, 
                                         mc1_seg, output_dir, 
-                                        frame_start, frame_stop, 0.15))
+                                        frame_start, frame_stop, 0.15, metric))
     
     p2 = multiprocess.Process(target=trp_reg, 
                                   args=(dynact_dir, output_seg_dir, 
                                         output_tmat_dir, filelist, 
                                         trp_seg, output_dir, 
-                                        frame_start, frame_stop, 0.05))
+                                        frame_start, frame_stop, 0.05, metric))
 
-    p1.start() 
-    p1.join() 
-
-    # p2.start() 
-    # p2.join() 
+    if bone == "MC1":
+        p1.start() 
+        p1.join() 
+    else:
+        p2.start() 
+        p2.join() 
 
 
 if __name__ == "__main__":
@@ -972,6 +972,8 @@ if __name__ == "__main__":
     parser.add_argument("output_dir", type=str)
     parser.add_argument("-s", dest="frame_start", type=int, default=1)
     parser.add_argument("-e", dest="frame_end", type=int, default=0)
+    parser.add_argument("-b", dest="bone", type=str, default="MC1")
+    parser.add_argument("-m", dest="metric", type=str, default="MeanSquares")
     args = parser.parse_args()
 
     dynact_dir = args.dynact_dir
@@ -980,5 +982,7 @@ if __name__ == "__main__":
     output_dir = args.output_dir
     frame_start = args.frame_start
     frame_end = args.frame_end
+    bone = args.bone
+    metric = args.metric
 
-    main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start, frame_end)
+    main(dynact_dir, mc1_seg, trp_seg, output_dir, frame_start, frame_end, bone, metric)
