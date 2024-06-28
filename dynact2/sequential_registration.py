@@ -871,7 +871,8 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
 
         else:
             if item == 2:
-                continue
+                print("Trying again...", flush=True)
+                counter += 1
                 # print("Can't get a good initial alignment at frame 1. Exiting...", flush=True)
                 # sys.exit()
             else:
