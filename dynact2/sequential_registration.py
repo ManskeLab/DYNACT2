@@ -499,31 +499,40 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         print("Registering volume {} to volume {}".format(item-1, item), flush=True)
 
         # setting and printing the previous greyscale and mc1 masks based on frame and attempt number
-        if (item % 18 > 0):
+        # if (item % 18 > 0):
 
-            # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
-            if item == 2:
-                prev_mc1_mask_dir = mc1_seg_start_dir
-                prev_mc1_mask = mc1_seg_resampled
+        #     # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
+        #     if item == 2:
+        #         prev_mc1_mask_dir = mc1_seg_start_dir
+        #         prev_mc1_mask = mc1_seg_resampled
 
-            # otherwise, use the mask mask from the previous step
-            else:
-                prev_mc1_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii")
-                prev_mc1_mask = sitk.ReadImage(prev_mc1_mask_dir, sitk.sitkUInt8)
+        #     # otherwise, use the mask mask from the previous step
+        #     else:
+        #         prev_mc1_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_MC1_MASK_REG.nii")
+        #         prev_mc1_mask = sitk.ReadImage(prev_mc1_mask_dir, sitk.sitkUInt8)
 
-            # the previous grayscale will always be the volume from the previous step
-            prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
-            prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
-            print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
-            print(f"prev_mc1_mask: {"/".join(prev_mc1_mask_dir.split("/")[8:])}", flush=True)
+        #     # the previous grayscale will always be the volume from the previous step
+        #     prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
+        #     prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
+        #     print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
+        #     print(f"prev_mc1_mask: {"/".join(prev_mc1_mask_dir.split("/")[8:])}", flush=True)
 
-        # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
-        else: 
-            print("Reached end of full movement cycle.", flush=True)
-            prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
-            prev_mc1_mask = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
-            print("prev_grayscale:", os.path.join(dynact_dir, "Volume_1_Resampled.nii"))
-            print("prev_mc1_mask:", mc1_seg)
+        # # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
+        # else: 
+        #     print("Reached end of full movement cycle.", flush=True)
+        #     prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
+        #     prev_mc1_mask = sitk.ReadImage(mc1_seg, sitk.sitkUInt8)
+        #     print("prev_grayscale:", os.path.join(dynact_dir, "Volume_1_Resampled.nii"))
+        #     print("prev_mc1_mask:", mc1_seg)
+
+        # This section below for using frame 1 mask for every frame
+        prev_mc1_mask_dir = mc1_seg_start_dir
+        prev_mc1_mask = mc1_seg_resampled
+
+        prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
+        prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
+        print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
+        print(f"prev_mc1_mask: {"/".join(prev_mc1_mask_dir.split("/")[8:])}", flush=True)
 
         # Get the next volume file
         current_file_path = os.path.join(dynact_dir, "Volume_" + str(item) + "_Resampled.nii")
@@ -566,7 +575,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         optimizer = optimizers.get(optimizer_index)
         interpolator = interpolators.get(interpolator_index)
 
-        # if its the first iteration in a set of attempts, run registration with no pref_tfm
+        # if its the first iteration in a set of attempts, run registration with no prev_tfm
         if counter == 0:
             print("prev_tfm: None")
             register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
@@ -582,7 +591,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
 
 
         prev_grayscale = current_image
-        prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
+        # prev_mc1_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_MASK_REG.nii"), sitk.sitkUInt8)
 
 
         # Check the mean intensity and compare to "gold standard" (i.e., frame #1)
@@ -753,31 +762,39 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
         print("Registering volume {} to volume {}".format(item-1, item), flush=True)
 
         # setting and printing the previous greyscale and mc1 masks based on frame and attempt number
-        if (item % 18 > 0):
+        # if (item % 18 > 0):
 
-            # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
-            if item == 2:
-                prev_trp_mask_dir = trp_seg_start_dir
-                prev_trp_mask = trp_seg_resampled
+        #     # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
+        #     if item == 2:
+        #         prev_trp_mask_dir = trp_seg_start_dir
+        #         prev_trp_mask = trp_seg_resampled
 
-            # otherwise, use the mask mask from the previous step
-            else:
-                prev_trp_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_TRP_MASK_REG.nii")
-                prev_trp_mask = sitk.ReadImage(prev_trp_mask_dir, sitk.sitkUInt8)
+        #     # otherwise, use the mask mask from the previous step
+        #     else:
+        #         prev_trp_mask_dir = os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-2) + "_TO_" + str(item-1) + "_TRP_MASK_REG.nii")
+        #         prev_trp_mask = sitk.ReadImage(prev_trp_mask_dir, sitk.sitkUInt8)
 
-            # the previous grayscale will always be the volume from the previous step
-            prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
-            prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
-            print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
-            print(f"prev_trp_mask: {"/".join(prev_trp_mask_dir.split("/")[8:])}", flush=True)
+        #     # the previous grayscale will always be the volume from the previous step
+        #     prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
+        #     prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
+        #     print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
+        #     print(f"prev_trp_mask: {"/".join(prev_trp_mask_dir.split("/")[8:])}", flush=True)
 
-        # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
-        else: 
-            print("Reached end of full movement cycle.", flush=True)
-            prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
-            prev_trp_mask = sitk.ReadImage(trp_seg, sitk.sitkUInt8)
-            print("prev_grayscale:", os.path.join(dynact_dir, "Volume_1_Resampled.nii"))
-            print("prev_mc1_mask:", trp_seg)
+        # # if it is on the 18th frame we set the previous grayscale to frame 1 and seg to the WBCTS
+        # else: 
+        #     print("Reached end of full movement cycle.", flush=True)
+        #     prev_grayscale = sitk.ReadImage(os.path.join(dynact_dir, "Volume_1_Resampled.nii"), sitk.sitkFloat32)
+        #     prev_trp_mask = sitk.ReadImage(trp_seg, sitk.sitkUInt8)
+        #     print("prev_grayscale:", os.path.join(dynact_dir, "Volume_1_Resampled.nii"))
+        #     print("prev_mc1_mask:", trp_seg)
+
+        # setting for every prev mask to be wbct
+        prev_trp_mask_dir = trp_seg_start_dir
+        prev_trp_mask = trp_seg_resampled
+        prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
+        prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
+        print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
+        print(f"prev_trp_mask: {"/".join(prev_trp_mask_dir.split("/")[8:])}", flush=True)
 
         # Get the next volume file
         current_file_path = os.path.join(dynact_dir, "Volume_" + str(item) + "_Resampled.nii")
@@ -836,7 +853,7 @@ def trp_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, trp_seg, outp
 
 
         prev_grayscale = current_image
-        prev_trp_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_TRP_MASK_REG.nii"), sitk.sitkUInt8)
+        # prev_trp_mask = sitk.ReadImage(os.path.join(output_dir, "RegisteredMasks/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_TRP_MASK_REG.nii"), sitk.sitkUInt8)
 
 
         # Check the mean intensity and compare to "gold standard" (i.e., frame #1)
