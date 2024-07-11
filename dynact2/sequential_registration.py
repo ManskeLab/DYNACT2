@@ -217,7 +217,6 @@ def registration(init_tmat, fixed, moving, metric, optimizer, interpolator):
     -------
     final_tmat : SimpleITK.TFM
     """
-    print(f"\tinit_tmat type at start of registration: {type(init_tmat)}")
     reg = sitk.ImageRegistrationMethod()
 
     # Similarity metric settings:
@@ -291,8 +290,8 @@ def registration(init_tmat, fixed, moving, metric, optimizer, interpolator):
 
     # FORMAT: registration.Execute(fixedImage, movingImage)
     final_tmat = reg.Execute(fixed, moving)
-    print(f"\tinit_tmat type at end of registration: {type(init_tmat)}")
-    print(f"\tfinal_tmat type: {type(final_tmat)}")
+    print(f"\t\tinit_tmat: {type(init_tmat)}")
+    print(f"\t\tfinal_tmat: {type(final_tmat)}")
 
     return final_tmat
 
@@ -353,9 +352,11 @@ def register_multiprocess(bone, volume_num, bone_seg_ref, grayscale_volume,
         init_tfm = initialize_tfm(masked_next, masked_bone)
         print(f"init_tfm (aka prev_tfm) is None. Matching geometric centres of imgs: {type(init_tfm)}")
     else:
-        init_tfm = sitk.CompositeTransform(init_tfm)
-        init_tfm = init_tfm.GetNthTransform(0)
-        print(f"init_tfm (aka prev_tfm) exists. Getting 0th tfm: {type(init_tfm)}")
+        # init_tfm = sitk.CompositeTransform(init_tfm)
+        # init_tfm = init_tfm.GetNthTransform(0)
+        # print(f"init_tfm (aka prev_tfm) exists. Getting 0th tfm: {type(init_tfm)}")
+        print(f"init_tfm (aka prev_tfm) exists: {type(init_tfm)}")
+
 
     # sitk.WriteImage(sitk.Resample(masked_next, grayscale_volume, transform=init_tfm), os.path.join(output_seg_dir, "test.nii"))
     # sys.exit()
@@ -366,9 +367,16 @@ def register_multiprocess(bone, volume_num, bone_seg_ref, grayscale_volume,
     # aligns the images with the grayscale by using the transform from the registration
     final_image = sitk.Resample(masked_bone, grayscale_volume, transform=final_tfm)
     final_mask = sitk.Resample(bone_seg_ref, transform=final_tfm, interpolator=sitk.sitkNearestNeighbor)
+    final_mask = sitk.BinaryMedian(final_mask, [2,2,2])
+
+    # during registration, the composite transform gets nested in another composite transform, this while loop gets the 
+    # 0th 3D similarity transform out of the nested transforms
+    while isinstance(final_tfm, sitk.CompositeTransform):
+        final_tfm = final_tfm.GetNthTransform(0)
+
+    print(f"\tfinal_tfm 0th tfm: {type(final_tfm)}")
 
     print("\tWriting registered image...", flush=True)
-    print(f"final_tfm (aka final_tmat) type {final_tfm}")
 
     try:
         sitk.WriteImage(bone_seg_ref, os.path.join(output_seg_dir, "VOLUME_" + str(volume_num-1) + "_TO_" + str(volume_num) + "_" + str(bone) + "_BONE_SEG_REF.nii"))
@@ -487,8 +495,6 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
     frames = range(frame_start+1, frame_stop, 1)
 
-    comp_tfm = sitk.CompositeTransform(3)
-
     print(f"\n****************** METHOD SETUP COMPLETE **************************\n")
     print(f"\tFrame 1 Intensity = {start_intensity_mc1}")
     print(f"\tTarget Intensity = {tolerance}")
@@ -498,6 +504,8 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     print(f"\n*******************************************************************")
     print(f"************************* FRAME {frames[0]} *********************************")
     print(f"*******************************************************************")
+
+    comp_tfm = sitk.CompositeTransform(3)
 
     index = 0
     while index < len(frames)-1:
@@ -512,7 +520,7 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         print(f"\n****************** Attempt #{counter+1}, Counter Resets: {reset_counter} ******************\n", flush=True)
         print("Registering volume {} to volume {}".format(item-1, item), flush=True)
 
-        # # setting and printing the previous greyscale and mc1 masks based on frame and attempt number
+        # setting and printing the previous greyscale and mc1 masks based on frame and attempt number
         # if (item % 18 > 0):
 
         #     # if we start from the beginning (frame 2) we will use the WBCT segmentation mask
@@ -543,7 +551,6 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # This section below for using frame 1 mask for every frame
         prev_mc1_mask_dir = mc1_seg_start_dir
         prev_mc1_mask = mc1_seg_resampled
-
         prev_greyscale_dir = os.path.join(dynact_dir, "Volume_" + str(item-1) + "_Resampled.nii")
         prev_grayscale = sitk.ReadImage(prev_greyscale_dir, sitk.sitkFloat32)
         print(f"prev_grayscale: {"/".join(prev_greyscale_dir.split("/")[8:])}", flush=True)
@@ -552,8 +559,6 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # Get the next volume file
         current_file_path = os.path.join(dynact_dir, "Volume_" + str(item) + "_Resampled.nii")
         print("current_file_path:", "/".join(current_file_path.split("/")[8:]))
-        # print("Previous Frame: {}".format(item-1), flush=True)
-        # print("Current Frame: {}".format(item), flush=True)
 
         if not os.path.isfile(current_file_path):
             continue
@@ -585,38 +590,36 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         
         prev_masked_mc1 = mask_bone(prev_grayscale, prev_mc1_mask_dilate) # THE ONE THAT WORKS GOOD
 
-        # Multiprocess the MC1 and TRP for each frame to speed things up
-        # print("Registering MC1 volume {} to volume {}".format(item-1, item), flush=True)
-
         optimizer = optimizers.get(optimizer_index)
         interpolator = interpolators.get(interpolator_index)
 
         # if its the first iteration in a set of attempts, run registration with no prev_tfm
-        if counter == 0:
-            print("prev_tfm: None")
-            register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
-                              tmat_hand_init, output_seg_dir, output_tmat_dir, metric=metric, optimizer=optimizer, interpolator=interpolator)
-        
-        # otherwise, use the transformation from the previous attempt as a parameter in this registration
-        else:
-            prev_tfm_dir = os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm")
-            prev_tfm = sitk.ReadTransform(prev_tfm_dir)
-            print("prev_tfm:", "/".join(prev_tfm_dir.split("/")[8:]))
-            register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
-                                tmat_hand_init, output_seg_dir, output_tmat_dir, prev_tfm, metric, optimizer, interpolator)
-
-        # use composite transform except on first frame   
-        # print(f"tmat_hand_init: {type(tmat_hand_init)}")
-        # if item == 2:
+        # if counter == 0:
         #     print("prev_tfm: None")
         #     register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
         #                       tmat_hand_init, output_seg_dir, output_tmat_dir, metric=metric, optimizer=optimizer, interpolator=interpolator)
+        
+        # # otherwise, use the transformation from the previous attempt as a parameter in this registration
         # else:
-        #     # print(f"prev_tfm: {type(comp_tfm)}")
         #     prev_tfm_dir = os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm")
         #     prev_tfm = sitk.ReadTransform(prev_tfm_dir)
+        #     print("prev_tfm:", "/".join(prev_tfm_dir.split("/")[8:]))
         #     register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
         #                         tmat_hand_init, output_seg_dir, output_tmat_dir, prev_tfm, metric, optimizer, interpolator)
+
+        # use composite transform except on first frame   
+        print(f"tmat_hand_init: {type(tmat_hand_init)}")
+        if item == 2:
+            print("prev_tfm: None")
+            register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
+                              tmat_hand_init, output_seg_dir, output_tmat_dir, metric=metric, optimizer=optimizer, interpolator=interpolator)
+        else:
+            print(f"prev_tfm: {type(comp_tfm)}")
+            prev_tfm = comp_tfm
+            # prev_tfm_dir = os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm")
+            # prev_tfm = sitk.ReadTransform(prev_tfm_dir)
+            register_multiprocess("MC1", item, prev_mc1_mask, current_image, prev_masked_mc1, 
+                                tmat_hand_init, output_seg_dir, output_tmat_dir, prev_tfm, metric, optimizer, interpolator)
 
 
         prev_grayscale = current_image
@@ -651,11 +654,12 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
 
             successful_tfm_dir = os.path.join(output_dir, "FinalTFMs/VOLUME_" + str(item-1) + "_TO_" + str(item) + "_MC1_REG.tfm")
             successful_tfm = sitk.ReadTransform(successful_tfm_dir)
+            # successful_tfm = successful_tfm.GetNthTransform(0)
             print(f"Successful tfm type: {type(successful_tfm)}")
 
-            # comp_tfm.AddTransform(successful_tfm)
-            # print(f'... but first adding {"/".join(successful_tfm_dir.split("/")[8:])} to CompositeTransform')
-            # print(f"Number of TFMs: {comp_tfm.GetNumberOfTransforms()}")
+            comp_tfm.AddTransform(successful_tfm)
+            print(f'... but first adding {"/".join(successful_tfm_dir.split("/")[8:])} to CompositeTransform')
+            print(f"Number of TFMs: {comp_tfm.GetNumberOfTransforms()}")
 
             print(f"\n*******************************************************************")
             print(f"************************* FRAME {item + 1} *********************************")
@@ -683,6 +687,10 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
         # if we go through 5 sets of resets, we give up
         if reset_counter >= max_reset:
             print(f"Error: Cannot compute adequate alignment. {max_reset} reset attempts failed. Exiting...", flush=True)
+            sys.exit()
+
+        if item == 10:
+            print(comp_tfm)
             sys.exit()
 
     # while loop end        
