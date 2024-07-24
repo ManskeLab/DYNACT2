@@ -548,6 +548,8 @@ def mc1_reg(dynact_dir, output_seg_dir, output_tmat_dir, filelist, mc1_seg, outp
     # if we havent set a stop frame, we run through the number of images in the folder
     if frame_stop <= 0:
         frame_stop = len(filelist)-1
+
+    sitk.Resample()
     
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
     frames = range(frame_start+1, frame_stop, 1)
