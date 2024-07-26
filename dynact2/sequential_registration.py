@@ -12,11 +12,9 @@ import sys
 import glob
 import errno
 import argparse
-import itk.itkCompositeTransformPython
 import multiprocess 
 import numpy as np
 import SimpleITK as sitk
-import itk
 
 from math import isclose
 from bounding_box_quad import bounding_box
