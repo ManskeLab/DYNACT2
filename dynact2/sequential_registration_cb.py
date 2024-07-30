@@ -81,18 +81,21 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
 
     """
     # Logger setup
+    filename = os.path.join(dynact_dir, f"{bone}_logs.log")
+    if os.path.exists(filename):
+        os.remove(filename)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     logging.basicConfig(
-            filename=os.path.join(dynact_dir, "logs.log"),
+            filename=filename,
             format='%(message)s',
             filemode='a'
         )
     logger = logging.getLogger()
 
+    sampling_list = [0.1, 0.25, 0.5]
+    kernel_list = [15, 15, 15] # if i want to iterate through different kernel sizes i can edit this list
 
-    dilation_kernel = (15, 15, 15)
-    registration_sampling_percentage = 0.25
     count = 0
 
     # loading in dynamic ct frame 1 and wbct segmentation
@@ -116,12 +119,6 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     # using binary threshold to segment entire hand
     frame_1_hand_segmentation = sitk.BinaryThreshold(frame_1_dynact, -200, 10000, 1, 0)
 
-    # dilating wbct segmentation and masking onto frame 1 for use in registration as moving_image_mask
-    wbct_segmentation_dilated = sitk.Resample(sitk.BinaryDilate(wbct_segmentation_resampled, dilation_kernel), 
-                            frame_1_dynact, 
-                            interpolator=sitk.sitkNearestNeighbor)
-    frame_1_dilated_mask = sitk.Mask(frame_1_dynact, wbct_segmentation_dilated)
-
     # if we havent set a stop frame, we run through the number of images in the folder
     if frame_stop <= 0:
         frame_stop = len(filelist)-1
@@ -138,9 +135,16 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     index = 0
     while index < len(frames)-1:
 
-        item = frames[index] # ie. frames[0] = 2 if no start frame is set
-        print(f'\nFrame {item}')
+         # dilating wbct segmentation and masking onto frame 1 for use in registration as moving_image_mask
+        dilation_kernel = (kernel_list[count], kernel_list[count], kernel_list[count])
+        wbct_segmentation_dilated = sitk.Resample(sitk.BinaryDilate(wbct_segmentation_resampled, dilation_kernel), 
+                            frame_1_dynact, 
+                            interpolator=sitk.sitkNearestNeighbor)
+        frame_1_dilated_mask = sitk.Mask(frame_1_dynact, wbct_segmentation_dilated)
 
+        item = frames[index] # ie. frames[0] = 2 if no start frame is set
+        print(f'\nFrame {item}, Attempt {count+1}')
+        
         # loading in current dynact frame
         current_dynact_path = os.path.join(dynact_dir, f"Volume_{item}_Resampled.nii")
         current_dynact = sitk.ReadImage(current_dynact_path, sitk.sitkFloat32)
@@ -155,6 +159,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
             )
         
         # running registration
+        registration_sampling_percentage = sampling_list[count]
         final_tmat = registration(
             initial_transform=hand_segmentation_transformation, 
             fixed_image=current_dynact, 
@@ -188,27 +193,29 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
         new_intensity = ((sitk.GetArrayFromImage(current_dynact_frame_cropped_and_masked)[(sitk.GetArrayFromImage(transformed_mask_cropped) > 0) & (np.absolute(sitk.GetArrayFromImage(current_dynact_frame_cropped_and_masked)) > 0)])).mean()
         print("FRAME 1 INTENSITY:", start_intensity)
         print("CURRENT INTENSITY:", new_intensity)
+        print("DILATION KERNEL:", dilation_kernel)
+        print("SAMPLING PERCENT:", registration_sampling_percentage)
 
         # if we are inside the threshold, move to the next frame
         # otherwise, we try again and iterate the counter
+        result = None
         if isclose(start_intensity, new_intensity, abs_tol=tolerance):
             print("Success! Logging result and moving to next frame...")
-            logger.warning(f"Frame {item}: Success, {start_intensity}, {new_intensity}, {registration_sampling_percentage}")
+            result = 'Success'
+            count = 0
             index += 1
 
         else:
-            if count < 3:
+            result = 'Fail'
+            if count < 2:
                 print("Unsuccessful registration. Increasing sampling percentage and trying again...")
-                logger.warning(f"Frame {item}: Failure, {start_intensity}, {new_intensity}, {registration_sampling_percentage}")
                 count += 1
-                registration_sampling_percentage += 0.25
             else:
                 print("Unsuccessful registration. Logging result and moving to next frame...")
-                logger.warning(f"Frame {item}: Failure, {start_intensity}, {new_intensity}, {registration_sampling_percentage}")
                 count = 0
                 index += 1
-                registration_sampling_percentage = 0.25
-
+        
+        logger.warning(f"{bone}, Frame {item}, {result}, {start_intensity}, {new_intensity}, {registration_sampling_percentage}, {dilation_kernel}")
 
     # while loop end        
 
@@ -220,7 +227,7 @@ def main(models_dir, model, motion, frame_start, bone):
     ----------
     models_dir (string) : directory to all dynact models
 
-    model (int) : desired model to perform registration on
+    model (int) : desired model to perform registration on (all models if none specified)
 
     motion (string) : desired motion to register (all motions registered if none specified)
 
@@ -234,58 +241,74 @@ def main(models_dir, model, motion, frame_start, bone):
 
     """
 
-    model_dir = os.path.join(models_dir, f"DYNACT2_{model}")
-
-    bone = 'MC1'
+    if model == None:
+        models = [204, 205, 206, 207, 208, 209]
+    else:
+        models = [model]
     
     if motion == None:
         motions = ['ABAD', 'KEY', 'OPP']
     else:
         motions = [motion]
 
-    for m in motions:
-        print(f"\n******Model: {model}, Bone: {bone}, Motion: {m}******")
-        motion_dir = os.path.join(model_dir, f"DYNACT2_{model}_{m}")
-        dynact_dir = os.path.join(motion_dir, "RESAMPLED")
-        output_dir = os.path.join(motion_dir, "REGISTRATION")
-        
-        # Create the output directories
-        output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
-        output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
-        output_seg_dir = output_dir + "/RegisteredMasks"
+    if bone == None:
+        bones = ['MC1', 'TRP']
+    else:
+        bones = [bone]
 
-        try:
-            os.mkdir(output_tmat_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:  # Directory already exists error
-                raise
-        try:
-            os.mkdir(output_initial_transf_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:  # Directory already exists error
-                raise
-        try:
-            os.mkdir(output_seg_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:  # Directory already exists error
-                raise
+    for mod in models:
 
-        # Compile a list of the files we need to register
-        filelist = os.path.join(dynact_dir, '*Volume_*_Resampled.nii')
+        model_dir = os.path.join(models_dir, f"DYNACT2_{model}")
 
-        wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{model}_WBCT")
-        wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{model}_WBCT_CROP_PERI_MC1_BB_REORIENT_{m}_TRANSF.nii")
+        for m in motions:
+            for b in bones:
+                print(f"\n******Model: {mod}, Bone: {b}, Motion: {m}******")
 
-        register_volumes(
-                dynact_dir=dynact_dir, 
-                output_segmentation_dir=output_seg_dir, 
-                output_transformation_dir=output_tmat_dir, 
-                filelist=filelist, 
-                wbct_segmentation_path=wbct_seg, 
-                frame_stop=27, 
-                tolerance=0.1,
-                bone=bone
-            )
+                motion_dir = os.path.join(model_dir, f"DYNACT2_{mod}_{m}")
+                dynact_dir = os.path.join(motion_dir, "RESAMPLED")
+                output_dir = os.path.join(motion_dir, "REGISTRATION")
+                
+                # Create the output directories
+                output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
+                output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
+                output_seg_dir = output_dir + "/RegisteredMasks"
+
+                try:
+                    os.mkdir(output_tmat_dir)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:  # Directory already exists error
+                        raise
+                try:
+                    os.mkdir(output_initial_transf_dir)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:  # Directory already exists error
+                        raise
+                try:
+                    os.mkdir(output_seg_dir)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:  # Directory already exists error
+                        raise
+
+                # Compile a list of the files we need to register
+                filelist = os.path.join(dynact_dir, '*Volume_*_Resampled.nii')
+
+                wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{mod}_WBCT")
+                wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{mod}_WBCT_CROP_PERI_{b}_BB_REORIENT_{m}_TRANSF.nii")
+
+                tolerance = 0.1
+                if b == 'TRP':
+                    tolerance = 0.05
+
+                register_volumes(
+                        dynact_dir=dynact_dir, 
+                        output_segmentation_dir=output_seg_dir, 
+                        output_transformation_dir=output_tmat_dir, 
+                        filelist=filelist, 
+                        wbct_segmentation_path=wbct_seg, 
+                        frame_stop=27, 
+                        tolerance=tolerance,
+                        bone=b
+                    )
     
 if __name__ == "__main__":
     # Parse input arguments
