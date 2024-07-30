@@ -9,7 +9,26 @@ from math import isclose
 from bounding_box_quad import bounding_box
 
 def registration(initial_transform, fixed_image, moving_image, moving_image_mask, sampling_percentage):
-        
+    """
+    Initializes and executes registration
+
+    Parameters
+    ----------
+    initial_transform (sitk.Transform) : initialization transform (generally hand segment match)
+
+    fixed_image (sitk.Image) : fixed image for registration (generally current dynact frame)
+
+    moving_image (sit.Image) : moving image for registration (generally the first dynact frame)
+
+    moving_image_mask (sitk.Image) : mask of features in moving image to be registered (generally frame 1 dilated mask)
+
+    sampling_percentage (double) : sampling percentage to be used in registration
+
+    Returns
+    -------
+    final_transform (sitk.Transform) : final transform produced from registration execution
+
+    """
     reg = sitk.ImageRegistrationMethod()
 
     reg.SetMetricAsMeanSquares()
@@ -28,21 +47,49 @@ def registration(initial_transform, fixed_image, moving_image, moving_image_mask
     reg.SetOptimizerScalesFromPhysicalShift()
     reg.SetInitialTransform(initial_transform, inPlace=False)
 
-    return reg.Execute(fixed=fixed_image, moving=moving_image)
+    final_transform = reg.Execute(fixed=fixed_image, moving=moving_image)
+
+    return final_transform
    
 def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_dir, filelist, wbct_segmentation_path, frame_start=1, frame_stop=0, tolerance=0.1, bone='MC1'):
-    
-    # Remove existing handlers if any
+    """
+    Initializes and registers images in a volume, motion, bone
+
+    Parameters
+    ----------
+    dynact_dir (string) : directory or dynamic ct images
+
+    output_segmentation_dir (string) : directory to write output segmentations
+
+    output_transformation_dir (string) : directory to write transforms
+
+    filelist (list(string)) : list of files in dynact directory
+
+    wbct_segmentation_path (string) : path to wbct segmentation of specific bone, motion
+
+    frame_start (int) : starting frame if specified 
+
+    frame_stop (int) : stopping frame if specified
+
+    tolerance (double) : allowed tolerance of intensity comparison
+
+    bone (string) : bone being registered
+
+    Returns
+    -------
+    none
+
+    """
+    # Logger setup
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-
     logging.basicConfig(
             filename=os.path.join(dynact_dir, "logs.log"),
             format='%(message)s',
             filemode='a'
         )
-    
     logger = logging.getLogger()
+
 
     dilation_kernel = (15, 15, 15)
     registration_sampling_percentage = 0.25
@@ -159,6 +206,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
                 print("Unsuccessful registration. Logging result and moving to next frame...")
                 logger.warning(f"Frame {item}: Failure, {start_intensity}, {new_intensity}, {registration_sampling_percentage}")
                 count = 0
+                index += 1
                 registration_sampling_percentage = 0.25
 
 
@@ -170,26 +218,33 @@ def main(models_dir, model, motion, frame_start, bone):
 
     Parameters
     ----------
-    dynact_dir : string
+    models_dir (string) : directory to all dynact models
 
-    mc1_seg : string
+    model (int) : desired model to perform registration on
 
-    trp_seg : string
+    motion (string) : desired motion to register (all motions registered if none specified)
 
-    output_dir : string
+    frame_start (int) : desired frame to start registering (will start on frame 1 if none specified)
+
+    bone (string) : desired bone to register (registers both bones if none specified)
 
     Returns
     -------
+    none
 
     """
 
     model_dir = os.path.join(models_dir, f"DYNACT2_{model}")
 
     bone = 'MC1'
-    motions = ['ABAD', 'KEY', 'OPP']
     
+    if motion == None:
+        motions = ['ABAD', 'KEY', 'OPP']
+    else:
+        motions = [motion]
+
     for m in motions:
-        print(f"******Model: {model}, Bone: {bone}, Motion: {m}******")
+        print(f"\n******Model: {model}, Bone: {bone}, Motion: {m}******")
         motion_dir = os.path.join(model_dir, f"DYNACT2_{model}_{m}")
         dynact_dir = os.path.join(motion_dir, "RESAMPLED")
         output_dir = os.path.join(motion_dir, "REGISTRATION")
@@ -227,12 +282,11 @@ def main(models_dir, model, motion, frame_start, bone):
                 output_transformation_dir=output_tmat_dir, 
                 filelist=filelist, 
                 wbct_segmentation_path=wbct_seg, 
-                frame_stop=5, 
+                frame_stop=27, 
                 tolerance=0.1,
                 bone=bone
             )
     
-
 if __name__ == "__main__":
     # Parse input arguments
     parser = argparse.ArgumentParser()
