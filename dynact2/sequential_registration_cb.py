@@ -258,7 +258,7 @@ def main(models_dir, model, motion, frame_start, bone):
 
     for mod in models:
 
-        model_dir = os.path.join(models_dir, f"DYNACT2_{model}")
+        model_dir = os.path.join(models_dir, f"DYNACT2_{mod}")
 
         for m in motions:
             for b in bones:
