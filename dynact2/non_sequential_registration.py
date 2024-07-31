@@ -242,7 +242,11 @@ def main(models_dir, model, motion, frame_start, bone):
     """
 
     if model == None:
-        models = [205, 206, 207, 208]
+        model_list = os.listdir(models_dir)
+        models = []
+        for item in model_list:
+            models.append(int(item.split("_")[1]))
+        print(f"Models Found in Director: {models}")
     else:
         models = [model]
     
