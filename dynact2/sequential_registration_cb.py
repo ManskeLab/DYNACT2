@@ -242,7 +242,7 @@ def main(models_dir, model, motion, frame_start, bone):
     """
 
     if model == None:
-        models = [204, 205, 206, 207, 208, 209]
+        models = [205, 206, 207, 208]
     else:
         models = [model]
     
@@ -314,9 +314,9 @@ if __name__ == "__main__":
     # Parse input arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("model_dir", type=str)
-    parser.add_argument("-model", dest="model", type=int, default=204)
 
     # optional arguments
+    parser.add_argument("-model", dest="model", type=int, default=None)
     parser.add_argument("-motion", dest="motion", type=str, default=None)
     parser.add_argument("-bone", dest="bone", type=str, default=None)
     parser.add_argument("-start", dest="frame_start", type=int, default=None)
