@@ -51,7 +51,7 @@ def registration(initial_transform, fixed_image, moving_image, moving_image_mask
 
     return final_transform
    
-def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_dir, filelist, wbct_segmentation_path, frame_start, frame_stop, tolerance, bone, model, motion):
+def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_dir, wbct_segmentation_path, frame_start, frame_stop, tolerance, bone, model, motion, logger):
     """
     Initializes and registers images in a volume, motion, bone
 
@@ -80,20 +80,6 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     none
 
     """
-    # Logger setup
-    filename = os.path.join(dynact_dir, f"{bone}_logs.log")
-    if os.path.exists(filename):
-        os.remove(filename)
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-    logging.basicConfig(
-            filename=filename,
-            format='%(message)s',
-            filemode='a'
-        )
-    logger = logging.getLogger()
-    logger.warning(f"model, motion, bone, frame, result, start_intensity, new_intensity, sampling_percentage, dilation_kernel")
-
     sampling_list = [0.1, 0.25, 0.5]
     kernel_list = [15, 15, 15] # if i want to iterate through different kernel sizes i can edit this list
 
@@ -122,10 +108,10 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
 
     # if we havent set a stop frame, we run through the number of images in the folder
     if frame_stop == None:
-        frame_stop = len(filelist)-1
+        frame_stop = len(os.listdir(dynact_dir)) - 1
 
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
-    frames = range(frame_start+1, frame_stop, 1)
+    frames = range(frame_start, frame_stop, 1)
 
     print(f"\n****************** METHOD SETUP COMPLETE **************************\n")
     print(f"\tFrame 1 Intensity = {start_intensity}")
@@ -134,7 +120,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     print(f"\tFrames = {frames}")
 
     index = 0
-    while index < len(frames)-1:
+    while index < len(frames):
 
         # dilating wbct segmentation and masking onto frame 1 for use in registration as moving_image_mask
         dilation_kernel = (kernel_list[count], kernel_list[count], kernel_list[count])
@@ -242,13 +228,28 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
 
     """
 
+    # Logger setup
+    filename = os.path.join(models_dir, f"logs.log")
+    if os.path.exists(filename):
+        os.remove(filename)
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(
+            filename=filename,
+            format='%(message)s',
+            filemode='a'
+        )
+    logger = logging.getLogger()
+    logger.warning(f"model, motion, bone, frame, result, start_intensity, new_intensity, sampling_percentage, dilation_kernel")
+
     if model == None:
         model_list = os.listdir(models_dir)
         models = []
         for item in model_list:
-            models.append(int(item.split("_")[1]))
+            if item != "logs.log":
+                models.append(int(item.split("_")[1]))
         models.sort()
-        print(f"Models Found in Director: {models}")
+        print(f"Models Found in Directory: {models}")
     else:
         models = [model]
     
@@ -295,9 +296,6 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
                     if e.errno != errno.EEXIST:  # Directory already exists error
                         raise
 
-                # Compile a list of the files we need to register
-                filelist = os.path.join(dynact_dir, '*Volume_*_Resampled.nii')
-
                 wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{mod}_WBCT")
                 wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{mod}_WBCT_CROP_PERI_{b}_BB_REORIENT_{m}_TRANSF.nii")
 
@@ -309,14 +307,14 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
                         dynact_dir=dynact_dir, 
                         output_segmentation_dir=output_seg_dir, 
                         output_transformation_dir=output_tmat_dir, 
-                        filelist=filelist, 
                         wbct_segmentation_path=wbct_seg, 
                         frame_start=frame_start,
                         frame_stop=frame_stop, 
                         tolerance=tolerance,
                         bone=b,
                         model=mod,
-                        motion=m
+                        motion=m,
+                        logger=logger
                     )
     
 if __name__ == "__main__":
