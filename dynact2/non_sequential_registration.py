@@ -31,7 +31,9 @@ def registration(initial_transform, fixed_image, moving_image, moving_image_mask
     """
     reg = sitk.ImageRegistrationMethod()
 
+    # reg.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
     reg.SetMetricAsMeanSquares()
+
     reg.SetMetricSamplingStrategy(reg.RANDOM)
     reg.SetMetricSamplingPercentage(sampling_percentage)
     reg.SetMetricMovingMask(moving_image_mask)
@@ -108,7 +110,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
 
     # if we havent set a stop frame, we run through the number of images in the folder
     if frame_stop == None:
-        frame_stop = len(os.listdir(dynact_dir)) - 1
+        frame_stop = len(os.listdir(dynact_dir)) - 2
 
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
     frames = range(frame_start, frame_stop, 1)
@@ -278,7 +280,7 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
                 # Create the output directories
                 output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
                 output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
-                output_seg_dir = output_dir + "/RegisteredMasks"
+                output_seg_dir = os.path.join(output_dir, "RegisteredMasks")
 
                 try:
                     os.mkdir(output_tmat_dir)
