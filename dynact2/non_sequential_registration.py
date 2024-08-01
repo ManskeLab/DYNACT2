@@ -51,7 +51,7 @@ def registration(initial_transform, fixed_image, moving_image, moving_image_mask
 
     return final_transform
    
-def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_dir, filelist, wbct_segmentation_path, frame_start=1, frame_stop=0, tolerance=0.1, bone='MC1'):
+def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_dir, filelist, wbct_segmentation_path, frame_start, frame_stop, tolerance, bone, model, motion):
     """
     Initializes and registers images in a volume, motion, bone
 
@@ -92,6 +92,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
             filemode='a'
         )
     logger = logging.getLogger()
+    logger.warning(f"model, motion, bone, frame, result, start_intensity, new_intensity, sampling_percentage, dilation_kernel")
 
     sampling_list = [0.1, 0.25, 0.5]
     kernel_list = [15, 15, 15] # if i want to iterate through different kernel sizes i can edit this list
@@ -120,7 +121,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     frame_1_hand_segmentation = sitk.BinaryThreshold(frame_1_dynact, -200, 10000, 1, 0)
 
     # if we havent set a stop frame, we run through the number of images in the folder
-    if frame_stop <= 0:
+    if frame_stop == None:
         frame_stop = len(filelist)-1
 
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
@@ -135,7 +136,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
     index = 0
     while index < len(frames)-1:
 
-         # dilating wbct segmentation and masking onto frame 1 for use in registration as moving_image_mask
+        # dilating wbct segmentation and masking onto frame 1 for use in registration as moving_image_mask
         dilation_kernel = (kernel_list[count], kernel_list[count], kernel_list[count])
         wbct_segmentation_dilated = sitk.Resample(sitk.BinaryDilate(wbct_segmentation_resampled, dilation_kernel), 
                             frame_1_dynact, 
@@ -155,7 +156,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
                 current_hand_segmentation,
                 frame_1_hand_segmentation,
                 sitk.Euler3DTransform(),
-                sitk.CenteredTransformInitializerFilter.MOMENTS,
+                sitk.CenteredTransformInitializerFilter.GEOMETRY,
             )
         
         # running registration
@@ -215,11 +216,11 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
                 count = 0
                 index += 1
         
-        logger.warning(f"{bone}, Frame {item}, {result}, {start_intensity}, {new_intensity}, {registration_sampling_percentage}, {dilation_kernel}")
+        logger.warning(f"{model}, {motion}, {bone}, {item}, {result}, {start_intensity}, {new_intensity}, {registration_sampling_percentage}, {dilation_kernel}")
 
     # while loop end        
 
-def main(models_dir, model, motion, frame_start, bone):
+def main(models_dir, model, motion, frame_start, frame_stop, bone):
     """
     Main function to perform the sequential image registration.
 
@@ -246,6 +247,7 @@ def main(models_dir, model, motion, frame_start, bone):
         models = []
         for item in model_list:
             models.append(int(item.split("_")[1]))
+        models.sort()
         print(f"Models Found in Director: {models}")
     else:
         models = [model]
@@ -309,9 +311,12 @@ def main(models_dir, model, motion, frame_start, bone):
                         output_transformation_dir=output_tmat_dir, 
                         filelist=filelist, 
                         wbct_segmentation_path=wbct_seg, 
-                        frame_stop=27, 
+                        frame_start=frame_start,
+                        frame_stop=frame_stop, 
                         tolerance=tolerance,
-                        bone=b
+                        bone=b,
+                        model=mod,
+                        motion=m
                     )
     
 if __name__ == "__main__":
@@ -323,7 +328,8 @@ if __name__ == "__main__":
     parser.add_argument("-model", dest="model", type=int, default=None)
     parser.add_argument("-motion", dest="motion", type=str, default=None)
     parser.add_argument("-bone", dest="bone", type=str, default=None)
-    parser.add_argument("-start", dest="frame_start", type=int, default=None)
+    parser.add_argument("-start", dest="frame_start", type=int, default=1)
+    parser.add_argument("-stop", dest="frame_stop", type=int, default=None)
 
     args = parser.parse_args()
     model_dir = args.model_dir
@@ -331,11 +337,13 @@ if __name__ == "__main__":
     motion = args.motion
     bone = args.bone
     frame_start = args.frame_start
+    frame_stop = args.frame_stop
 
     main(
             models_dir=model_dir,
             model=model,
             motion=motion,
             frame_start=frame_start, 
+            frame_stop=frame_stop,
             bone=bone
         )
