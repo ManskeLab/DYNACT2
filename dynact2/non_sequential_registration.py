@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import errno
 import logging
+import glob
 
 from math import isclose
 from bounding_box_quad import bounding_box
@@ -110,16 +111,17 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
 
     # if we havent set a stop frame, we run through the number of images in the folder
     if frame_stop == None:
-        frame_stop = len(os.listdir(dynact_dir)) - 2
+            frame_stop = len(glob.glob(os.path.join(dynact_dir, '*Volume_*_Resampled.nii')))
+
 
     # reindexes our frames so that start frame will show as previous frame, we will start registering the next frame
-    frames = range(frame_start, frame_stop, 1)
+    frames = range(frame_start, frame_stop+1, 1)
 
     print(f"\n****************** METHOD SETUP COMPLETE **************************\n")
     print(f"\tFrame 1 Intensity = {start_intensity}")
     print(f"\tTolerance = +/-{tolerance}")
     print(f"\tStarting Volume = {frame_start}")
-    print(f"\tFrames = {frames}")
+    print(f"\tFrames = {frame_start} to {frame_stop}")
 
     index = 0
     while index < len(frames):
@@ -271,53 +273,57 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
 
         for m in motions:
             for b in bones:
-                print(f"\n******Model: {mod}, Bone: {b}, Motion: {m}******")
 
                 motion_dir = os.path.join(model_dir, f"DYNACT2_{mod}_{m}")
-                dynact_dir = os.path.join(motion_dir, "RESAMPLED")
-                output_dir = os.path.join(motion_dir, "REGISTRATION")
-                
-                # Create the output directories
-                output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
-                output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
-                output_seg_dir = os.path.join(output_dir, "RegisteredMasks")
 
-                try:
-                    os.mkdir(output_tmat_dir)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:  # Directory already exists error
-                        raise
-                try:
-                    os.mkdir(output_initial_transf_dir)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:  # Directory already exists error
-                        raise
-                try:
-                    os.mkdir(output_seg_dir)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:  # Directory already exists error
-                        raise
+                if os.path.isdir(motion_dir):
 
-                wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{mod}_WBCT")
-                wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{mod}_WBCT_CROP_PERI_{b}_BB_REORIENT_{m}_TRANSF.nii")
+                    print(f"\n******Model: {mod}, Bone: {b}, Motion: {m}******")
 
-                tolerance = 0.1
-                if b == 'TRP':
-                    tolerance = 0.05
+                    dynact_dir = os.path.join(motion_dir, "RESAMPLED")
+                    output_dir = os.path.join(motion_dir, "REGISTRATION")
+                    
+                    # Create the output directories
+                    output_tmat_dir = os.path.join(output_dir, "FinalTFMs")
+                    output_initial_transf_dir = os.path.join(output_dir, "InitalTransformations")
+                    output_seg_dir = os.path.join(output_dir, "RegisteredMasks")
 
-                register_volumes(
-                        dynact_dir=dynact_dir, 
-                        output_segmentation_dir=output_seg_dir, 
-                        output_transformation_dir=output_tmat_dir, 
-                        wbct_segmentation_path=wbct_seg, 
-                        frame_start=frame_start,
-                        frame_stop=frame_stop, 
-                        tolerance=tolerance,
-                        bone=b,
-                        model=mod,
-                        motion=m,
-                        logger=logger
-                    )
+                    try:
+                        os.mkdir(output_tmat_dir)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:  # Directory already exists error
+                            raise
+                    try:
+                        os.mkdir(output_initial_transf_dir)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:  # Directory already exists error
+                            raise
+                    try:
+                        os.mkdir(output_seg_dir)
+                    except OSError as e:
+                        if e.errno != errno.EEXIST:  # Directory already exists error
+                            raise
+
+                    wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{mod}_WBCT")
+                    wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{mod}_WBCT_CROP_PERI_{b}_BB_REORIENT_{m}_TRANSF.nii")
+
+                    tolerance = 0.1
+                    if b == 'TRP':
+                        tolerance = 0.05
+
+                    register_volumes(
+                            dynact_dir=dynact_dir, 
+                            output_segmentation_dir=output_seg_dir, 
+                            output_transformation_dir=output_tmat_dir, 
+                            wbct_segmentation_path=wbct_seg, 
+                            frame_start=frame_start,
+                            frame_stop=frame_stop, 
+                            tolerance=tolerance,
+                            bone=b,
+                            model=mod,
+                            motion=m,
+                            logger=logger
+                        )
     
 if __name__ == "__main__":
     # Parse input arguments
@@ -328,7 +334,7 @@ if __name__ == "__main__":
     parser.add_argument("-model", dest="model", type=int, default=None)
     parser.add_argument("-motion", dest="motion", type=str, default=None)
     parser.add_argument("-bone", dest="bone", type=str, default=None)
-    parser.add_argument("-start", dest="frame_start", type=int, default=1)
+    parser.add_argument("-start", dest="frame_start", type=int, default=2)
     parser.add_argument("-stop", dest="frame_stop", type=int, default=None)
 
     args = parser.parse_args()
