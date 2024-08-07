@@ -86,7 +86,7 @@ def register_volumes(dynact_dir, output_segmentation_dir, output_transformation_
 
     """
     sampling_list = [0.1, 0.25, 0.5]
-    kernel_list = [15, 10, 5] # if i want to iterate through different kernel sizes i can edit this list
+    kernel_list = [15, 10, 5] 
     metric_list = ['MS', 'MMI']
 
     sampling_index = 0
