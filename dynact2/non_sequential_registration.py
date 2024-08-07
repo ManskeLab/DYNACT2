@@ -240,20 +240,6 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
 
     """
 
-    # Logger setup
-    logger_filename = os.path.join(models_dir, f"{model}_logs.log")
-    if os.path.exists(logger_filename):
-        os.remove(logger_filename)
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-    logging.basicConfig(
-            filename=logger_filename,
-            format='%(message)s',
-            filemode='a'
-        )
-    logger = logging.getLogger()
-    logger.warning(f"model, motion, bone, frame, result, start_intensity, new_intensity, sampling_percentage, dilation_kernel")
-
     if model == None:
         model_list = os.listdir(models_dir)
         models = []
@@ -317,9 +303,9 @@ def main(models_dir, model, motion, frame_start, frame_stop, bone):
                     wbct_seg_dir = os.path.join(model_dir, f"DYNACT2_{mod}_WBCT")
                     wbct_seg = os.path.join(wbct_seg_dir, f"DYNACT2_{mod}_WBCT_CROP_PERI_{b}_BB_REORIENT_{m}_TRANSF.nii")
 
-                    tolerance = 0.075
-                    if b == 'TRP':
-                        tolerance = 0.05
+                tolerance = 0.1
+                if b == 'TRP':
+                    tolerance = 0.05
 
                     register_volumes(
                             dynact_dir=dynact_dir, 
