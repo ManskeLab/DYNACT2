@@ -1,16 +1,22 @@
 import os
 import pandas as pd
+pd.set_option('display.max_columns', None)
 
+volume = 207
 filepath = "/Users/manskelab/Desktop/"
-filename = "206_logs.log"
+filename = f"{volume}_logs.log"
 
 file = os.path.join(filepath, filename)
 df = pd.read_csv(file)
 
 df.reset_index(inplace=True)
 
-columns = ["model", "motion", "bone", "frame", "result", "start_intensity", "end_intensity", "sampling_percentage", "dilation_kernel_1", "dilation_kernel_2", "dilation_kernel_3"]
+columns = ["model", "motion", "bone", "frame", "result", "start_intensity", "end_intensity", "sampling_percentage", "dilation_kernel_1", "dilation_kernel_2", "dilation_kernel_3", "metric"]
 df.columns = columns
+
+df = df[df['end_intensity'].apply(lambda x: x != " nan")]
+
+df["end_intensity"] = pd.to_numeric(df["end_intensity"])
 
 df['error'] = abs((df['start_intensity'] - df['end_intensity'])/df['start_intensity'])
 
@@ -48,6 +54,6 @@ def process_data(df):
 
 # Process the data
 processed_df = process_data(df)
-output_file = 'processed_data.xlsx'
+output_file = f'{volume}_processed_data.xlsx'
 processed_df.to_excel(os.path.join(filepath, output_file), index=False)
 
