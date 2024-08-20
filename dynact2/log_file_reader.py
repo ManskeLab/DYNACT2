@@ -1,7 +1,20 @@
+# ----------------------------------------------------------------
+# log_file_reader.py 
+#
+# Created by: Chris Brunet
+# Created on: Aug 20, 2024
+#
+# Description: Parses data from DYNACT log files into excel spreadsheet. During this process, it only extracts the best performing iteration from each frame.
+#
+# Usage: 
+#     1. Follow instructions in README.md
+#     2. python log_file_reader.py
+# ----------------------------------------------------------------
+
 import os
 import pandas as pd
-pd.set_option('display.max_columns', None)
 
+# manually set these variables
 volumes = [212, 213]
 filepath = "/Users/manskelab/Desktop/"
 
