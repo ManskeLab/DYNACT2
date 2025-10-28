@@ -1,5 +1,5 @@
 # DYNACT2 - develop_clean branch
-Contains a 'clean' codebase with platform- and user-specific hard-coded scripts removed
+Contains a 'clean' codebase with platform- and user-specific hard-coded scripts removed (in progress)
 
 ## Workflow (Registration):
 1. Run the graph cut segmentation on the WBCT scan
