@@ -1,7 +1,8 @@
 #!/bin/bash -u
 # example usage script. Change path to images and exact image paths/subjects as needed
+# Usage: batch_seq_reg.sh <path_to_images>
 MOTION_SCRIPT="dynact2/mode_biomech/compute_motion.py"
-PATH_TO_IMAGES="fill/me/in/"
+PATH_TO_IMAGES=$1
 OUTPUT_DIR="/dynact2/output/"
 
 for SUBJECT in 001 002 003; do

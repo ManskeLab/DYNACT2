@@ -1,7 +1,8 @@
 #!/bin/bash -u
-# example seq registration .sh script. Adjust image path, subject numbers and output dir as needed
+# example seq registration .sh script. Adjust subject numbers and output dir as needed
+# Usage: batch_seq_reg.sh <path_to_images>
 SEQ_REG_SCRIPT="dynact2/mod_registration/sequential_registration.py"
-PATH_TO_IMAGES="fill/me/in/"
+PATH_TO_IMAGES=$1
 
 for SUBJECT in 001 002 003; do
   OUTPUT_DIR="${PATH_TO_IMAGES}DYNACT2_${SUBJECT}/DYNACT2_${SUBJECT}_ABAD/SEQ_REG"
