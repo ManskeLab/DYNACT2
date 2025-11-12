@@ -71,7 +71,7 @@ def get_motion_cycles(motion_frames: pd.DataFrame, subject: int):
 
   return motion_cycles, motion_definitions
 
-def read_data_file(file_path, columns: list[str], rows: list[str]) -> pd.DataFrame:
+def read_data_file(file_path, columns: list[str] | str = None, rows: list[str] | str = None) -> pd.DataFrame:
   """Reads string-indexed data from excel or csv file
 
   Args:
@@ -90,15 +90,22 @@ def read_data_file(file_path, columns: list[str], rows: list[str]) -> pd.DataFra
   if not os.path.exists(file_path):
     raise FileExistsError
 
-  elif os.path.splitext(file_path)[-1].lower() in ["xls", "xlsx", "xlsm", "xlsb", "odf", "ods" "odt"]:
+  if os.path.splitext(file_path)[-1].lower() in [".xls", ".xlsx", ".xlsm", ".xlsb", ".odf", ".ods" ".odt"]:
     # pandas accepted file extensions for read_excel
     data_all = pd.read_excel(file_path)
   else:
     # any comma-separated file can be read. Otherwise panda will throw its own error
     data_all = pd.read_csv(file_path)
 
-  data_frame = data_all[columns]
-  row_accessor = data_frame.transpose()
-  row_accessor = row_accessor[rows]
-  data_frame = row_accessor.transpose()
+  if columns:
+    data_frame = data_all[columns]
+    
+  if rows:
+    row_accessor = data_frame.transpose()
+    row_accessor = row_accessor[rows]
+    data_frame = row_accessor.transpose()
+  
+  if not rows and not columns:
+    data_frame = data_all
+
   return data_frame
