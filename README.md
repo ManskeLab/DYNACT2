@@ -16,9 +16,9 @@ Contains a 'clean' codebase with platform- and user-specific hard-coded scripts 
 
 ## Kinematics Workflow (scripts in mod_kinematics):
 1. Use TMC_JCS repository to create JCS for each bone (XCT). Confirm through manual inspection on pyvista images
-2. Use registration .tfm files to transform to WBCT, and then to DYNACT motion frames
-3. Calculate joint angles from transformed JCS
-4. Use plotting scripts to identify motion cycles
-5. Calculate average motion curves per direction, per motion, per subject for JCS axes
-6. Plot mean angle curves with CI as in [Van Royen et al. 2024](https://doi.org/10.1177/17531934241229948)
-7. Create hysteresis plot as in [Van Royen et al. 2024](https://doi.org/10.1177/17531934241229948) (script in-progress)
+2. Use registration .tfm files to transform to WBCT, and then to DYNACT motion frames (<code>compute_jcs.py</code>)
+3. Calculate joint angles from transformed JCS (<code>compute_motion.py</code>)
+4. Use plotting scripts to identify motion cycles (<code>plot_angles.py</code>)
+5. Calculate average motion curves per direction, per motion, per subject for JCS axes (<code>average_curve.py</code>)
+6. Plot mean angle curves with CI as in [Van Royen et al. 2024](https://doi.org/10.1177/17531934241229948) (<code>avg_curve_stats.py</code>)
+7. Create hysteresis plot as in [Van Royen et al. 2024](https://doi.org/10.1177/17531934241229948) (script in-progress) (<code>hysteresis_ind.py</code>)
