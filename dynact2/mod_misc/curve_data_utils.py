@@ -101,8 +101,14 @@ def read_data_file(file_path, columns: list[str], rows: list[str]) -> pd.DataFra
       print(f"Exception reading from data file {file_path}:")
       print(e)
       raise
-  data_frame = data_all[columns]
-  row_accessor = data_frame.transpose()
-  row_accessor = row_accessor[rows]
-  data_frame = row_accessor.transpose()
+  
+  data_frame = data_all
+  if columns:
+    data_frame = data_all[columns]
+  
+  if rows:
+    row_accessor = data_frame.transpose()
+    row_accessor = row_accessor[rows]
+    data_frame = row_accessor.transpose()
+
   return data_frame
