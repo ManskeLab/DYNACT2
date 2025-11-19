@@ -30,13 +30,15 @@ Edit History:
 """
 
 import argparse
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from statistics import mean
 from itertools import zip_longest
-from curve_data_utils import interpolate_curve, get_motion_cycles
-from openpyxl import load_workbook
+from curve_data_utils import interpolate_curve, get_motion_cycles, read_data_file
+from openpyxl import load_workbook, Workbook
+from ast import literal_eval
 
 debug = False
 
@@ -66,34 +68,34 @@ if __name__ == '__main__':
   parser.add_argument("subject", type=int, help="Subject ID")
   parser.add_argument("motion_frames_path", help = "Path to motion frame identifying excel file.")
   parser.add_argument("motion_data_path", help = "Path to motion data excel/csv file.")
-  parser.add_argument("--points", type = int, help = "Number of points to 'resample' data to.", default = None)
-  parser.add_argument("--data_type", help = "Number of points to 'resample' data to.", default = None)
+  parser.add_argument("--points", type = int, help = "Number of points to 'resample' data to.", default = 100)
+  parser.add_argument("--data_cols", help = "Data columns to extract. Can be a single column or list of columns", default = None)
   parser.add_argument('--plot', action='store_true', default=False)
   parser.add_argument("-d",'--debug', action='store_true', default=False)
   parser.add_argument('--output_file', default='outputs/avg_motion_curves.xlsx')
-
-  # data_type = data_type with spaces='_'?
+  parser.add_argument('--plot_savefile', default='outputs/avg_curve.png')
+  parser.add_argument('--nw', '--no_write', action='store_true', help="Set to true for no writing of results")
 
   args = parser.parse_args()
   debug = args.debug
 
-  # parse motion cycles from the frame_id file
+  # parse motion cycle frame indices from the frame_id file
   motion_cycles, motion_frame_def = get_motion_cycles(pd.read_excel(args.motion_frames_path), args.subject)
   if debug:
     print(f"DEBUG motion_cycles: {motion_cycles}, motion frames: {motion_frame_def}")
 
-  subject_data = pd.read_csv(args.motion_data_path)
-  subject_data = subject_data[f"{args.data_type}"].to_numpy()
+  subject_data = read_data_file(args.motion_data_path, columns = args.data_cols)
 
   if debug:
-    print(f"DEBUG: subject_data: {subject_data}")
+    print(f"DEBUG: subject_data: \n{subject_data}")
 
+  # extract motion cycle curves
   cycles = []
   for (start, extreme, end) in motion_frame_def:
     cycles.append(subject_data[start-1:end])
   
   if debug:
-    print(f"DEBUG: cycles: {cycles}")
+    print(f"DEBUG: cycles: \n{cycles}")
 
   # interpolate cycles linearly and resample to unanimous x-range
   interpolated_cycles = []
@@ -103,24 +105,35 @@ if __name__ == '__main__':
 
   avg_curve = get_curve_average(interpolated_cycles)
 
-  if args.plot:
+  if args.plot or args.plot_savefile:
     # plot all curves along with average on same plot
     # todo: add better visualization method
     for curve in interpolated_cycles:
       plt.plot(curve)
-    plt.plot(avg_curve, '--')
-    plt.show()
+    plt.plot(avg_curve, 'r--')
+    plt.grid()
+    if args.plot_savefile:
+      plt.savefig(args.plot_savefile)
+    if args.plot:
+      plt.show()
   
   print(f"Average Curve: ")
   print(avg_curve)
 
-  # print avg curve to workbook in format subject, angle_direction(ie data_type), avg_curve
-  wb = load_workbook(args.output_file)
-  # Select First Worksheet
-  ws = wb.worksheets[0]
-  ws.append([args.subject, args.data_type, str(avg_curve)])
+  if not args.nw:
+    if os.path.isfile(args.output_file):
+      # print avg curve to workbook in format subject, angle_direction(ie data_type), avg_curve
+      wb = load_workbook(args.output_file)
+      # Select First Worksheet
+      ws = wb.worksheets[0]
+    else:
+      wb = Workbook()
+      ws = wb.active
+      ws["A1"] = "subject"
+      ws["B1"] = "curve_data"
 
-  wb.save(args.output_file)
+    ws.append([args.subject, str(avg_curve)])
+    wb.save(args.output_file)
 
   exit(0)
 
