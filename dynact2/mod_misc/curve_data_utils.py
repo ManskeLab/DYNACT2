@@ -29,7 +29,7 @@ def interpolate_curve(data, degree: int, points: int, x_offset = 0):
 
   return interp_curve
 
-def get_motion_cycle_frames(motion_frames: pd.DataFrame, motion_cycles):
+def get_motion_cycle_frames(motion_frames: pd.DataFrame, motion_cycles: list[int]):
   """Extract start, extreme and end frames for the motion cycles
 
   Args:
@@ -95,8 +95,12 @@ def read_data_file(file_path, columns: list[str], rows: list[str]) -> pd.DataFra
     data_all = pd.read_excel(file_path)
   else:
     # any comma-separated file can be read. Otherwise panda will throw its own error
-    data_all = pd.read_csv(file_path)
-
+    try: 
+      data_all = pd.read_csv(file_path)
+    except Exception as e:
+      print(f"Exception reading from data file {file_path}:")
+      print(e)
+      raise
   data_frame = data_all[columns]
   row_accessor = data_frame.transpose()
   row_accessor = row_accessor[rows]
