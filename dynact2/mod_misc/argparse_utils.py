@@ -9,7 +9,15 @@
 
 import argparse
 
-def create_parser_optionals(parser = None) -> argparse.ArgumentParser:
+def create_parser_optionals(parser: argparse.ArgumentParser = None) -> argparse.ArgumentParser:
+  """Add optional arguments to parser
+
+  Args:
+      parser (argparse.ArgumentParser, optional): Add optionals to existing parser. Defaults to None.
+
+  Returns:
+      argparse.ArgumentParser: parser with optional arguments defined
+  """
   parser = parser if parser else argparse.ArgumentParser()
   
   # data indexing args
