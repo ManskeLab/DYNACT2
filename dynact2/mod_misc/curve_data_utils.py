@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.interpolate import make_interp_spline
 from ast import literal_eval
 import os
+from openpyxl import Workbook, load_workbook
 
 def interpolate_curve(data, degree: int, points: int, x_offset = 0):
   """Interpolate curve data using a spline, at specifc points (assuming data points x starts at x_offset)
@@ -88,7 +89,7 @@ def read_data_file(file_path, columns: list[str] | str = None, rows: list[str] |
   Note: data is not converted to a numpy array before return
   """
   if not os.path.exists(file_path):
-    raise FileExistsError
+    raise FileExistsError(f"Cannot open file {file_path}")
 
   if os.path.splitext(file_path)[-1].lower() in [".xls", ".xlsx", ".xlsm", ".xlsb", ".odf", ".ods" ".odt"]:
     # pandas accepted file extensions for read_excel
@@ -103,12 +104,59 @@ def read_data_file(file_path, columns: list[str] | str = None, rows: list[str] |
       raise
   
   data_frame = data_all
-  if columns:
-    data_frame = data_all[columns]
-  
   if rows:
     row_accessor = data_frame.transpose()
     row_accessor = row_accessor[rows]
     data_frame = row_accessor.transpose()
+  
+  if columns:
+    data_frame = data_frame[columns]
 
   return data_frame
+
+def write_to_excel(file_path: str | os.PathLike, data_rows: list | np.ndarray, column_headers = None) -> None:
+  """Write data rows to excel, optionally set column headers
+
+  Args:
+      file_path (str | os.PathLike): Path to excel file. Created if does not exist
+      data_rows (list | np.ndarray): List which each element is a row of data to be written
+      column_headers (list, optional): Column header values to insert. Defaults to None.
+  """
+  # Check if the file already exists
+  if os.path.isfile(file_path):
+    print(f"Writing to (appending) existing file {file_path}.")
+    wb = load_workbook(file_path)
+    sheet = wb.active
+  else:
+    print(f"Writing to new file {file_path}.")
+    wb = Workbook()
+    sheet = wb.active
+
+  if column_headers:
+    for col_num, header_text in enumerate(column_headers, 1):
+      sheet.cell(row=1, column=col_num, value=header_text)
+
+  for row_data in data_rows:
+    sheet.append(row_data)
+  
+  wb.save(file_path)
+  return
+
+def extract_data(frame_idx: int, data_file: str | os.PathLike, data_cols: list[str] | str = None):
+  """Extract a row of data pertaining to a frame
+
+  Args:
+      frame_idx (int): row index for frame data
+      data_file (str | os.PathLike, optional): File path to data file. Defaults to None.
+      data_cols (list[str] | str, optional): Columns to extract data from. Defaults to all.
+
+  Returns:
+      _type_: _description_
+  """
+  data = None
+  if data_file and data_cols:
+    data = read_data_file(data_file, columns = data_cols, rows = [frame_idx])
+  else:
+    data = read_data_file(data_file, rows = [frame_idx])
+
+  return data

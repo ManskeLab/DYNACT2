@@ -1,6 +1,7 @@
 #!/bin/bash
 # script to print averaged curves of joint angles in healthy subjects
 # adjust output_file as needed
+# included as an example, create .sh scripts or run from command-line as needed 
 
 for subject in {200..214}; do
   for motion in 'abad' 'key' 'opp'; do
