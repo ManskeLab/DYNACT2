@@ -12,3 +12,5 @@ motions = ['ABAD', 'KEY', 'OPP']
 
 # Angle directions. Used in mod_kinematics
 angle_dirs = ['AbAd', 'FlexExt', 'Rot']
+
+bone_ids = ['TRP', 'MC1']

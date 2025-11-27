@@ -54,7 +54,7 @@ def calculate_curve_stats(curves, confidence_level: float = 0.95):
   curve_data = curve_data.T
   mins = curve_data.min(axis=1)
   means = np.mean(curve_data, axis=1)
-  sds = curve_data.min(axis = 1)
+  sds = np.std(curve_data, axis = 1)
   maxes = curve_data.max(axis=1)
 
   for curve in curve_data:
@@ -99,7 +99,7 @@ def plot_mean_ci_curve(mean_data, cis):
   #plt.ylim(5, 30)
   return fig, ax
 
-#todo: move to utils file
+#todo: use function from curve_data_utils file
 def write_line_excel(filename, write_data: list, row_id = None):
   """Writes stats outputs to excel file. Optional row_id will be added in first column if included
 
