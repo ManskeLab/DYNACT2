@@ -12,6 +12,7 @@ from scipy.interpolate import make_interp_spline
 from ast import literal_eval
 import os
 from openpyxl import Workbook, load_workbook
+import matplotlib.pyplot as plt
 
 def interpolate_curve(data, degree: int, points: int, x_offset = 0):
   """Interpolate curve data using a spline, at specifc points (assuming data points x starts at x_offset)
@@ -160,3 +161,13 @@ def extract_data(frame_idx: int, data_file: str | os.PathLike, data_cols: list[s
     data = read_data_file(data_file, rows = [frame_idx])
 
   return data
+
+def generate_plot(show: bool = False, savefile: str | os.PathLike | None = None, no_label: bool = False):
+  plt.grid()
+  if not no_label:
+    plt.legend()
+  if savefile:
+    plt.savefig(savefile)
+  if show:
+    plt.show()
+  return

@@ -22,7 +22,8 @@ def create_parser_optionals(parser: argparse.ArgumentParser = None) -> argparse.
   
   # data indexing args
   parser.add_argument("--input_filepath", help="Path to input data")
-  parser.add_argument("--input_dir", help="path to data input directory. Assumes some file structure/naming convention or uses argument input_filename")
+  parser.add_argument("--input_dir", help="path to data input directory. Assumes some file structure/naming convention or uses argument in_fp_template")
+  parser.add_argument("--in_fp_template", help="Filepath templated with a variable to fill. See specific script details")
   parser.add_argument("--input_filename", help="Name of file for input data. Used in conjunction with --input_dir")
   parser.add_argument("--subject", type=int, help="Subject to identify") 
   parser.add_argument("--data_type", default=None, help="Index data rows from the 'Type' column with this value. All rows are selected if this is not specified")
@@ -40,6 +41,7 @@ def create_parser_optionals(parser: argparse.ArgumentParser = None) -> argparse.
   parser.add_argument("--frames", type = int, default=60, help="Number of frames to analyze")
   parser.add_argument("--max_of", default='min', type=str, help="String representing which calculation to compute frame. Default=min. Options=min, mean/avg, max")
   parser.add_argument("--motion_frames", help="File path to identified motion frames of subject")
+  parser.add_argument("--subjects", nargs='*', help="specify subject ID's to apply this to.", default=[])
 
   parser.add_argument('-d', '--debug', action='store_true', default=False)
   parser.add_argument('-v', '--verbose', action='count', default=0)
