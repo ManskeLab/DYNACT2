@@ -14,7 +14,7 @@ import numpy as np
 from pyacvd import Clustering
 from scipy.spatial.transform import Rotation as R
 
-def generate_mesh(file):
+def generate_mesh(file, vertices = 20000):
     """
     Adapted from Tadiwa 2024
 
@@ -38,6 +38,7 @@ def generate_mesh(file):
     surf_mesh1['thickness'] = np.empty(surf_mesh1.n_points) # array for scalar measures, thickness is for subchondral bone plate thickness
     surf_mesh1['distance'][:] = np.nan
     surf_mesh1['thickness'][:] = np.nan
+    surf_mesh1.triangulate()
 
     # -------------------------------------------------------------------------- #
     #  Step 2:  Relax models to ensure equal-sized triangular mesh elements
@@ -45,7 +46,7 @@ def generate_mesh(file):
     #   Bone 1 mesh
     surf_clust1 = Clustering(surf_mesh1)
     surf_clust1.subdivide(3)
-    surf_clust1.cluster(20000)  # mesh with 10,000 mesh points/vertices
+    surf_clust1.cluster(vertices) # mesh with $vertices vertices
     surf_mesh1 = surf_clust1.create_mesh()
     surf_mesh1['distance'] = np.empty(surf_mesh1.n_points)  # array for scalar measures, distance is for joint space width
     surf_mesh1['thickness'] = np.empty(surf_mesh1.n_points) # array for scalar measures, thickness is for subchondral bone plate thickness
